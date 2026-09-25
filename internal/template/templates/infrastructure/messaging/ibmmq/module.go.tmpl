@@ -1,0 +1,52 @@
+// +scaffold-go: requires github.com/bancolombia/commons-mq-go
+// Run `go get github.com/bancolombia/commons-mq-go && go mod tidy` after
+// generating to fetch the dependency. Note that commons-mq-go requires CGO and
+// the IBM MQ C client libraries installed at /opt/mqm.
+
+package ibmmqinfra
+
+import (
+	"context"
+
+	"github.com/bancolombia/commons-mq-go/mq"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// Module is the shared IBM MQ foundation. It provides a singleton *mq.Client
+// that all generated listeners, senders, and request/reply clients share.
+//
+// Customize NewClient below (queue manager, channel, credentials, ...) before
+// deploying.
+var Module = fx.Module("ibmmq-infra",
+	fx.Provide(NewClient),
+	fx.Invoke(Register),
+)
+
+// NewClient constructs the shared mq.Client. Wire your own *config.Config here
+// once you've added IBM MQ connection details (queue manager, channel, host,
+// port, credentials).
+func NewClient(logger *zap.Logger) (*mq.Client, error) {
+	client, err := mq.NewClient(mq.Config{
+		QueueManagerName: "QM1",
+		ConnectionName:   "localhost(1414)",
+		ChannelName:      "DEV.APP.SVRCONN",
+		Username:         "app",
+		Password:         "passw0rd",
+	})
+	if err != nil {
+		logger.Error("failed to construct ibm mq client", zap.Error(err))
+		return nil, err
+	}
+	return client, nil
+}
+
+// Register closes the IBM MQ client during fx OnStop.
+func Register(lc fx.Lifecycle, client *mq.Client, logger *zap.Logger) {
+	lc.Append(fx.Hook{
+		OnStop: func(_ context.Context) error {
+			logger.Info("closing ibm mq client")
+			return client.Close()
+		},
+	})
+}

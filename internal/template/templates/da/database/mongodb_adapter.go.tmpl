@@ -1,0 +1,58 @@
+package database
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
+{{- if .ModulePath}}
+
+	"{{.ModulePath}}/config"
+{{- end}}
+)
+
+type MongoDBAdapter struct {
+	client   *mongo.Client
+	database *mongo.Database
+	logger   *zap.Logger
+}
+
+func NewMongoDBAdapter(cfg *config.Config, logger *zap.Logger) (*MongoDBAdapter, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoDB.URI))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to mongodb: %w", err)
+	}
+
+	return &MongoDBAdapter{
+		client:   client,
+		database: client.Database(cfg.MongoDB.Database),
+		logger:   logger,
+	}, nil
+}
+
+func (m *MongoDBAdapter) onStart(ctx context.Context) error {
+	if err := m.client.Ping(ctx, nil); err != nil {
+		m.logger.Error("MongoDB ping failed", zap.Error(err))
+		return fmt.Errorf("mongodb ping failed: %w", err)
+	}
+	m.logger.Info("📦 MongoDB adapter started successfully.")
+	return nil
+}
+
+func (m *MongoDBAdapter) onStop(ctx context.Context) error {
+	m.logger.Info("🔌 MongoDB adapter stopping...")
+
+	if err := m.client.Disconnect(ctx); err != nil {
+		m.logger.Error("Failed to disconnect from MongoDB", zap.Error(err))
+		return fmt.Errorf("failed to disconnect from mongodb: %w", err)
+	}
+
+	m.logger.Info("✅ MongoDB adapter disconnected successfully.")
+	return nil
+}

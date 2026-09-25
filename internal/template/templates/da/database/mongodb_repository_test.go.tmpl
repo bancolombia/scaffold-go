@@ -1,0 +1,167 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
+
+{{if .ModulePath}}
+	"{{.ModulePath}}/internal/domain"
+{{end}}
+)
+
+// MyMockedObject is a mock implementation of the I{{.EntityName}}MongoGateway interface.
+type MyMockedObject struct {
+	mock.Mock
+}
+
+func (m *MyMockedObject) InsertOne(ctx context.Context, document interface{}, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {
+	args := m.Called(ctx, document, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*mongo.InsertOneResult), args.Error(1)
+}
+
+func (m *MyMockedObject) FindOne(ctx context.Context, filter interface{}, opts ...*options.FindOneOptions) *mongo.SingleResult {
+	args := m.Called(ctx, filter, opts)
+	if args.Get(0) == nil {
+		return nil
+	}
+	return args.Get(0).(*mongo.SingleResult)
+}
+
+func (m *MyMockedObject) UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+	args := m.Called(ctx, filter, update, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*mongo.UpdateResult), args.Error(1)
+}
+
+func (m *MyMockedObject) DeleteOne(ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+	args := m.Called(ctx, filter, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*mongo.DeleteResult), args.Error(1)
+}
+
+func (m *MyMockedObject) Find(ctx context.Context, filter interface{}, opts ...*options.FindOptions) (*mongo.Cursor, error) {
+	args := m.Called(ctx, filter, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*mongo.Cursor), args.Error(1)
+}
+
+// Test{{.EntityName}}Repository_Create tests the Create method
+func Test{{.EntityName}}Repository_Create(t *testing.T) {
+	tests := []struct {
+		name    string
+		entity  *domain.{{.EntityName}}
+		setup   func(*MyMockedObject)
+		wantErr bool
+	}{
+		{
+			name: "successful create",
+			entity: &domain.{{.EntityName}}{
+				// Initialize entity fields
+			},
+			setup: func(m *MyMockedObject) {
+				m.On("InsertOne", mock.Anything, mock.Anything, mock.Anything).Return(&mongo.InsertOneResult{}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "create with error",
+			entity: &domain.{{.EntityName}}{
+				// Initialize entity fields
+			},
+			setup: func(m *MyMockedObject) {
+				m.On("InsertOne", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCollection := new(MyMockedObject)
+			if tt.setup != nil {
+				tt.setup(mockCollection)
+			}
+
+			repo := &{{.EntityName}}Repository{
+				collection: mockCollection,
+				logger:     zap.NewNop(),
+			}
+
+			ctx := context.Background()
+			err := repo.Create(ctx, tt.entity)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test{{.EntityName}}Repository_Delete tests the Delete method
+func Test{{.EntityName}}Repository_Delete(t *testing.T) {
+	tests := []struct {
+		name    string
+		id      string
+		setup   func(*MyMockedObject)
+		wantErr bool
+	}{
+		{
+			name: "successful delete",
+			id:   "entity-1",
+			setup: func(m *MyMockedObject) {
+				m.On("DeleteOne", mock.Anything, mock.Anything, mock.Anything).Return(&mongo.DeleteResult{DeletedCount: 1}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "delete with error",
+			id:   "entity-2",
+			setup: func(m *MyMockedObject) {
+				m.On("DeleteOne", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCollection := new(MyMockedObject)
+			if tt.setup != nil {
+				tt.setup(mockCollection)
+			}
+
+			repo := &{{.EntityName}}Repository{
+				collection: mockCollection,
+				logger:     zap.NewNop(),
+			}
+
+			ctx := context.Background()
+			err := repo.Delete(ctx, tt.id)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

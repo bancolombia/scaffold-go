@@ -1,0 +1,158 @@
+package api
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+
+	"go.uber.org/zap"
+)
+
+type {{.ClientName}}Client struct {
+	httpClient *http.Client
+	baseURL    string
+	logger     *zap.Logger
+}
+
+func New{{.ClientName}}Client(baseURL string, logger *zap.Logger) *{{.ClientName}}Client {
+	return &{{.ClientName}}Client{
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		baseURL: baseURL,
+		logger:  logger,
+	}
+}
+
+// TODO: Implement service interface methods
+
+// Get performs an HTTP GET request
+func (c *{{.ClientName}}Client) Get(ctx context.Context, path string, result interface{}) error {
+	resp, err := c.makeRequest(ctx, http.MethodGet, path, nil)
+	if err != nil {
+		return err
+	}
+	return c.decodeResponse(resp, result)
+}
+
+// Post performs an HTTP POST request
+func (c *{{.ClientName}}Client) Post(ctx context.Context, path string, body interface{}, result interface{}) error {
+	bodyReader, err := c.encodeBody(body)
+	if err != nil {
+		return err
+	}
+	
+	resp, err := c.makeRequest(ctx, http.MethodPost, path, bodyReader)
+	if err != nil {
+		return err
+	}
+	return c.decodeResponse(resp, result)
+}
+
+// Put performs an HTTP PUT request
+func (c *{{.ClientName}}Client) Put(ctx context.Context, path string, body interface{}, result interface{}) error {
+	bodyReader, err := c.encodeBody(body)
+	if err != nil {
+		return err
+	}
+	
+	resp, err := c.makeRequest(ctx, http.MethodPut, path, bodyReader)
+	if err != nil {
+		return err
+	}
+	return c.decodeResponse(resp, result)
+}
+
+// Delete performs an HTTP DELETE request
+func (c *{{.ClientName}}Client) Delete(ctx context.Context, path string) error {
+	_, err := c.makeRequest(ctx, http.MethodDelete, path, nil)
+	return err
+}
+
+func (c *{{.ClientName}}Client) makeRequest(ctx context.Context, method, path string, body io.Reader) (*http.Response, error) {
+	url := fmt.Sprintf("%s%s", c.baseURL, path)
+	
+	// Retry logic with exponential backoff
+	maxRetries := 3
+	var lastErr error
+	
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			// Exponential backoff: 1s, 2s, 4s
+			backoff := time.Second * time.Duration(1<<uint(attempt-1))
+			c.logger.Info("Retrying request with backoff", 
+				zap.Int("attempt", attempt+1),
+				zap.Int("maxRetries", maxRetries),
+				zap.Duration("backoff", backoff))
+			time.Sleep(backoff)
+		}
+		
+		req, err := http.NewRequestWithContext(ctx, method, url, body)
+		if err != nil {
+			c.logger.Error("Failed to create request", zap.Error(err))
+			return nil, err
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+
+		c.logger.Info("Making API request", 
+			zap.String("method", method), 
+			zap.String("url", url),
+			zap.Int("attempt", attempt+1))
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			c.logger.Error("Request failed", zap.Error(err))
+			lastErr = err
+			continue
+		}
+
+		if resp.StatusCode >= 500 {
+			// Retry on server errors
+			c.logger.Warn("Server error, will retry", 
+				zap.Int("status", resp.StatusCode))
+			lastErr = fmt.Errorf("API server error: %d", resp.StatusCode)
+			resp.Body.Close()
+			continue
+		}
+		
+		if resp.StatusCode >= 400 {
+			c.logger.Error("API returned client error", 
+				zap.Int("status", resp.StatusCode))
+			resp.Body.Close()
+			return nil, fmt.Errorf("API client error: %d", resp.StatusCode)
+		}
+
+		return resp, nil
+	}
+	
+	return nil, fmt.Errorf("request failed after %d attempts: %w", maxRetries, lastErr)
+}
+
+func (c *{{.ClientName}}Client) encodeBody(body interface{}) (io.Reader, error) {
+	if body == nil {
+		return nil, nil
+	}
+	
+	var buf io.Reader
+	// TODO: Implement proper body encoding
+	return buf, nil
+}
+
+func (c *{{.ClientName}}Client) decodeResponse(resp *http.Response, v interface{}) error {
+	defer resp.Body.Close()
+	
+	if v == nil {
+		return nil
+	}
+	
+	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
+		c.logger.Error("Failed to decode response", zap.Error(err))
+		return err
+	}
+	
+	return nil
+}

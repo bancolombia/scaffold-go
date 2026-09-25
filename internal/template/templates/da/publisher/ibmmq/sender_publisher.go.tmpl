@@ -1,0 +1,41 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/commons-mq-go/mq"
+	"go.uber.org/zap"
+)
+
+// {{.PublisherName}}Publisher sends messages to the IBM MQ "{{.Target}}" queue
+// using commons-mq-go.
+type {{.PublisherName}}Publisher struct {
+	sender *mq.Sender
+	logger *zap.Logger
+}
+
+// New{{.PublisherName}}Publisher is the fx constructor for {{.PublisherName}}Publisher.
+func New{{.PublisherName}}Publisher(client *mq.Client, logger *zap.Logger) *{{.PublisherName}}Publisher {
+	return &{{.PublisherName}}Publisher{
+		sender: client.NewSender("{{.Target}}"),
+		logger: logger,
+	}
+}
+
+// Send transmits the given payload as the message body and returns the
+// generated message ID.
+func (p *{{.PublisherName}}Publisher) Send(ctx context.Context, body string) (string, error) {
+	p.logger.Info("sending ibm mq message",
+		zap.String("queue", "{{.Target}}"),
+		zap.Int("size", len(body)),
+	)
+	id, err := p.sender.Send(ctx, body)
+	if err != nil {
+		p.logger.Error("failed to send ibm mq message",
+			zap.String("queue", "{{.Target}}"),
+			zap.Error(err),
+		)
+		return "", err
+	}
+	return id, nil
+}

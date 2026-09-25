@@ -1,0 +1,61 @@
+package handler
+
+import (
+{{- if .ModulePath}}
+	"{{.ModulePath}}/internal/usecase"
+{{- end}}
+	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
+)
+
+type I{{.HandlerName}}Handler interface {
+{{range .Routes}}
+	{{.Handler}}(c *fiber.Ctx) error
+{{end}}
+}
+
+// {{.HandlerName}}Handler handles HTTP requests for {{.HandlerName | toLower}} handler using Fiber
+type {{.HandlerName}}Handler struct {
+{{- range .UseCases}}
+	{{.Name}} usecase.{{.Type}}
+{{- end}}
+	logger *zap.Logger
+}
+
+// New{{.HandlerName}}Handler creates a new {{.HandlerName}}Handler with Fiber App
+func New{{.HandlerName}}Handler(
+{{- range .UseCases}}
+	{{.Name}} usecase.{{.Type}},
+{{- end}}
+	logger *zap.Logger,
+) *{{.HandlerName}}Handler {
+	
+	handler := &{{.HandlerName}}Handler{
+{{- range .UseCases}}
+		{{.Name}}: {{.Name}},
+{{- end}}
+		logger: logger,
+	}
+	
+	return handler
+}
+
+{{range .Routes}}
+// {{.Handler}} handles {{.Method}} {{.Path}}
+func (h *{{$.HandlerName}}Handler) {{.Handler}}(c *fiber.Ctx) error {
+	h.logger.Info("handling request", 
+		zap.String("method", "{{.Method}}"), 
+		zap.String("path", "{{.Path}}"),
+		zap.String("ip", c.IP()))
+	
+{{- if $.HasValidation}}
+	// TODO: Add request validation logic
+{{- end}}
+	
+	// TODO: Implement handler logic
+	
+	return c.JSON(fiber.Map{
+		"status": "ok",
+	})
+}
+{{end}}

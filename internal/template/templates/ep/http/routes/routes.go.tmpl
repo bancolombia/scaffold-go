@@ -1,0 +1,37 @@
+package routes
+
+import (
+{{- if .ModulePath}}
+	"{{.ModulePath}}/internal/entrypoints/http/handler"
+{{- end}}
+	"github.com/gofiber/fiber/v2"
+	"go.uber.org/fx"
+)
+
+type Route struct {
+	Fiber *fiber.App
+}
+
+func NewRoute(app *fiber.App) Route {
+	return Route{
+		Fiber: app,
+	}
+}
+
+var Module = fx.Module("http_routes",
+	fx.Provide(NewRoute),
+	fx.Invoke(registerRoutes),
+)
+
+func registerRoutes(
+	{{.HandlerName | toLower}}Handler handler.I{{.HandlerName}}Handler,
+	healthHandler handler.IHealthHandler,
+	route Route,
+) {
+	api := route.Fiber.Group("/api")
+	{{.HandlerName | toLower}}Router := New{{.HandlerName}}Router({{.HandlerName | toLower}}Handler)
+	{{.HandlerName | toLower}}Router.SetupRoutes(api)
+
+	healthRouter := NewHealthRouter(healthHandler)
+	healthRouter.SetupRoutes(api)
+}

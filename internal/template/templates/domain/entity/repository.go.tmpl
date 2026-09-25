@@ -1,0 +1,12 @@
+package domain
+
+import "context"
+
+// {{.RepositoryName}} defines data access operations for {{.EntityName}}
+type {{.RepositoryName}} interface {
+	Create(ctx context.Context, entity *{{.EntityName}}) error
+	GetByID(ctx context.Context, id string) (*{{.EntityName}}, error)
+	Update(ctx context.Context, entity *{{.EntityName}}) error
+	Delete(ctx context.Context, id string) error
+	List(ctx context.Context, limit, offset int) ([]*{{.EntityName}}, error)
+}

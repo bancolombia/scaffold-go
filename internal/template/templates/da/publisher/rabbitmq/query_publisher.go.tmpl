@@ -1,0 +1,68 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/bancolombia/reactive-commons-go/pkg/async"
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"go.uber.org/zap"
+)
+
+// {{.PublisherName}}Request is the JSON request shape for the "{{.Target}}" query.
+type {{.PublisherName}}Request struct {
+	ID string `json:"id"`
+}
+
+// {{.PublisherName}}Response is the JSON response shape for the "{{.Target}}" query.
+type {{.PublisherName}}Response struct {
+	ID string `json:"id"`
+}
+
+// {{.PublisherName}}Publisher performs a request/reply against the "{{.Target}}"
+// resource using reactive-commons-go.
+type {{.PublisherName}}Publisher struct {
+	app    *rabbit.Application
+	logger *zap.Logger
+}
+
+// New{{.PublisherName}}Publisher is the fx constructor for {{.PublisherName}}Publisher.
+func New{{.PublisherName}}Publisher(app *rabbit.Application, logger *zap.Logger) *{{.PublisherName}}Publisher {
+	return &{{.PublisherName}}Publisher{
+		app:    app,
+		logger: logger,
+	}
+}
+
+// Request issues an async query and waits for the response.
+// The given context's deadline is honored by reactive-commons-go.
+func (p *{{.PublisherName}}Publisher) Request(ctx context.Context, target string, req {{.PublisherName}}Request) ({{.PublisherName}}Response, error) {
+	q := async.AsyncQuery[{{.PublisherName}}Request]{
+		Resource:  "{{.Target}}",
+		QueryData: req,
+	}
+
+	p.logger.Info("requesting async query",
+		zap.String("resource", q.Resource),
+		zap.String("target", target),
+	)
+
+	raw, err := p.app.Gateway().RequestReply(ctx, q, target)
+	if err != nil {
+		p.logger.Error("async query failed",
+			zap.String("resource", q.Resource),
+			zap.Error(err),
+		)
+		return {{.PublisherName}}Response{}, err
+	}
+
+	var resp {{.PublisherName}}Response
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		p.logger.Error("failed to decode async query response",
+			zap.String("resource", q.Resource),
+			zap.Error(err),
+		)
+		return {{.PublisherName}}Response{}, err
+	}
+	return resp, nil
+}

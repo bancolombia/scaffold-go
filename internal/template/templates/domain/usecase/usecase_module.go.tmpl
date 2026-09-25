@@ -1,0 +1,12 @@
+package {{.PackageName}}
+
+import "go.uber.org/fx"
+
+// Module provides use cases dependencies as an fx Module
+var Module = fx.Module("usecase",
+	fx.Provide(
+		// usecases:begin
+		New{{.UseCaseName}}UseCase,
+		// usecases:end
+	),
+)

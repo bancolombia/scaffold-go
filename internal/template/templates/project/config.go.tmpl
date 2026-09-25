@@ -1,0 +1,96 @@
+package config
+
+import (
+	"github.com/spf13/viper"
+)
+
+type Config struct {
+	Server   ServerConfig
+	Database DatabaseConfig
+	MongoDB  MongoDBConfig
+	DynamoDB DynamoDBConfig
+	Logging  LoggingConfig
+}
+
+type ServerConfig struct {
+	Port string
+	Host string
+}
+
+type DatabaseConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Database string
+}
+
+type MongoDBConfig struct {
+	URI      string
+	Database string
+}
+
+type DynamoDBConfig struct {
+	Region   string
+	Endpoint string
+}
+
+type LoggingConfig struct {
+	Level string
+}
+
+func NewConfig() (*Config, error) {
+	// Set config file name and type
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+
+	// Add config paths (supports multiple locations)
+	viper.AddConfigPath("./config")
+	viper.AddConfigPath(".")
+
+	// Enable environment variable support
+	viper.AutomaticEnv()
+
+	// Set default values
+	setDefaults()
+
+	// Read config file (optional - will use defaults if not found)
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, err
+		}
+		// Config file not found; using defaults and environment variables
+	}
+
+	// Unmarshal config into struct
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
+}
+
+func setDefaults() {
+	// Server defaults
+	viper.SetDefault("server.host", "localhost")
+	viper.SetDefault("server.port", "8080")
+
+	// Database defaults
+	viper.SetDefault("database.host", "localhost")
+	viper.SetDefault("database.port", "5432")
+	viper.SetDefault("database.user", "postgres")
+	viper.SetDefault("database.password", "postgres")
+	viper.SetDefault("database.database", "{{.Name}}")
+
+	// MongoDB defaults
+	viper.SetDefault("mongodb.uri", "mongodb://localhost:27017")
+	viper.SetDefault("mongodb.database", "{{.Name}}")
+
+	// DynamoDB defaults
+	viper.SetDefault("dynamodb.region", "us-east-1")
+	viper.SetDefault("dynamodb.endpoint", "")
+
+	// Logging defaults
+	viper.SetDefault("logging.level", "info")
+}

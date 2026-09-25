@@ -1,0 +1,62 @@
+// +scaffold-go: requires github.com/bancolombia/reactive-commons-go
+// Run `go get github.com/bancolombia/reactive-commons-go && go mod tidy` after
+// generating to fetch the dependency.
+
+package rabbitmqinfra
+
+import (
+	"context"
+
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// Module is the shared RabbitMQ foundation. It provides a singleton
+// *rabbit.Application built from defaults, and starts/stops it in the fx
+// lifecycle so consumers and publishers can rely on it being ready.
+//
+// Customize NewApplication below (broker URL, AppName, etc.) before deploying.
+var Module = fx.Module("rabbitmq-infra",
+	fx.Provide(NewApplication),
+	fx.Invoke(Register),
+)
+
+// NewApplication builds the shared rabbit.Application using configuration
+// defaults. Wire your own *config.Config here once you've added the relevant
+// fields (host, port, credentials, AppName, ...).
+func NewApplication(logger *zap.Logger) (*rabbit.Application, error) {
+	cfg := rabbit.NewConfigWithDefaults()
+	cfg.AppName = "{{.PackageName}}"
+	cfg.Logger = nil // reactive-commons-go uses slog; bridge from zap if desired.
+
+	app, err := rabbit.NewApplication(cfg)
+	if err != nil {
+		logger.Error("failed to construct rabbit application", zap.Error(err))
+		return nil, err
+	}
+	return app, nil
+}
+
+// Register binds rabbit.Application's Start/Stop to the fx lifecycle.
+// Start is invoked AFTER all consumer/publisher fx.Invoke registrations have
+// run, so listeners are attached to the registry first.
+func Register(lc fx.Lifecycle, app *rabbit.Application, logger *zap.Logger) {
+	appCtx, cancel := context.WithCancel(context.Background())
+	lc.Append(fx.Hook{
+		OnStart: func(_ context.Context) error {
+			logger.Info("starting rabbit application")
+			go func() {
+				if err := app.Start(appCtx); err != nil {
+					logger.Error("rabbit application stopped with error", zap.Error(err))
+				}
+			}()
+			return nil
+		},
+		OnStop: func(_ context.Context) error {
+			logger.Info("stopping rabbit application")
+			cancel()
+			return nil
+		},
+	})
+}

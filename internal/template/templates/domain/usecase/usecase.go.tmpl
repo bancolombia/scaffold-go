@@ -1,0 +1,52 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"{{.ModulePath}}/internal/domain"
+{{- if .HasLogger}}
+	"go.uber.org/zap"
+{{- end}}
+)
+
+// {{.UseCaseName}}UseCase defines the interface for {{.UseCaseName | toLower}}
+type {{.UseCaseName}}UseCase interface {
+	Execute(ctx context.Context{{if .InputType}}, input {{.InputType}}{{end}}){{if .OutputType}} ({{.OutputType}}, error){{else}} error{{end}}
+}
+
+// {{.UseCaseName | toLower}}Impl implements {{.UseCaseName}}UseCase
+type {{.UseCaseName | toLower}}Impl struct {
+{{- range .Dependencies}}
+	{{.Name}} domain.{{.Type}}
+{{- end}}
+{{- if .HasLogger}}
+	logger *zap.Logger
+{{- end}}
+}
+
+// New{{.UseCaseName}}UseCase creates a new {{.UseCaseName}}UseCase
+func New{{.UseCaseName}}UseCase({{range $i, $dep := .Dependencies}}{{if $i}}, {{end}}{{$dep.Name}} domain.{{$dep.Type}}{{end}}{{if and .Dependencies .HasLogger}}, {{end}}{{if .HasLogger}}logger *zap.Logger{{end}}) {{.UseCaseName}}UseCase {
+	return &{{.UseCaseName | toLower}}Impl{
+{{- range .Dependencies}}
+		{{.Name}}: {{.Name}},
+{{- end}}
+{{- if .HasLogger}}
+		logger: logger,
+{{- end}}
+	}
+}
+
+// Execute executes the use case
+func (uc *{{.UseCaseName | toLower}}Impl) Execute(ctx context.Context{{if .InputType}}, input {{.InputType}}{{end}}){{if .OutputType}} ({{.OutputType}}, error){{else}} error{{end}} {
+{{- if .HasLogger}}
+	uc.logger.Info("executing {{.UseCaseName}}")
+{{- end}}
+	
+	// TODO: Implement use case logic
+	
+{{- if .OutputType}}
+	var result {{.OutputType}}
+	return result, nil
+{{- else}}
+	return nil
+{{- end}}
+}

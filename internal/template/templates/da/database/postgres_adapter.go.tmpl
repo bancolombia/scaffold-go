@@ -1,0 +1,47 @@
+package database
+
+import (
+	"context"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"fmt"
+
+	"go.uber.org/zap"
+	"{{.ModulePath}}/config"
+)
+
+type PostgresAdapter struct {
+	pool     *pgxpool.Pool
+	logger *zap.Logger
+}
+
+func NewPostgresAdapter(cfg *config.Config, logger *zap.Logger) (*PostgresAdapter, error) {
+	db, err := pgxpool.New(context.Background(), buildUrlString(cfg))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	return &PostgresAdapter{
+		pool:     db,
+		logger: logger,
+	}, nil
+}
+
+func (p *PostgresAdapter) onStart(ctx context.Context) error {
+	p.logger.Info("📦 Postgres adapter started successfully.")
+	return nil
+}
+
+func (p *PostgresAdapter) onStop(ctx context.Context) error {
+	p.logger.Info("🔌 Postgres adapter stopping...")
+
+	p.pool.Close()
+	p.logger.Info("✅ Postgres adapter disconnected successfully.")
+
+	return nil
+}
+
+func buildUrlString(cfg *config.Config) string {
+	return fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", 
+		cfg.Database.User, cfg.Database.Password, cfg.Database.Host,
+		cfg.Database.Port, cfg.Database.Database)
+}

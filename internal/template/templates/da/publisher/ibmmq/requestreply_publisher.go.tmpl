@@ -1,0 +1,41 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"time"
+
+	"github.com/bancolombia/commons-mq-go/mq"
+	"go.uber.org/zap"
+)
+
+// {{.PublisherName}}Publisher performs request/reply against the IBM MQ
+// "{{.Target}}" queue using commons-mq-go's temporary-queue strategy.
+type {{.PublisherName}}Publisher struct {
+	client *mq.RequestReplyClient
+	logger *zap.Logger
+}
+
+// New{{.PublisherName}}Publisher is the fx constructor for {{.PublisherName}}Publisher.
+func New{{.PublisherName}}Publisher(client *mq.Client, logger *zap.Logger) *{{.PublisherName}}Publisher {
+	return &{{.PublisherName}}Publisher{
+		client: client.NewRequestReplyClient("{{.Target}}"),
+		logger: logger,
+	}
+}
+
+// Request sends the given payload and waits up to timeout for a response.
+func (p *{{.PublisherName}}Publisher) Request(ctx context.Context, body string, timeout time.Duration) (*mq.Message, error) {
+	p.logger.Info("issuing ibm mq request",
+		zap.String("queue", "{{.Target}}"),
+		zap.Duration("timeout", timeout),
+	)
+	resp, err := p.client.RequestReply(ctx, body, timeout)
+	if err != nil {
+		p.logger.Error("ibm mq request failed",
+			zap.String("queue", "{{.Target}}"),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	return resp, nil
+}

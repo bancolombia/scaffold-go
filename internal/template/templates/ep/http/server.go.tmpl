@@ -1,0 +1,63 @@
+package http
+
+import (
+	"context"
+	"fmt"
+
+    {{- if .ModulePath}}
+	"{{.ModulePath}}/config"
+	"{{.ModulePath}}/internal/entrypoints/http/handler"
+    "{{.ModulePath}}/internal/entrypoints/http/routes"
+	"{{.ModulePath}}/internal/entrypoints/http/middleware"
+    {{- end}}
+	
+	"github.com/gofiber/fiber/v2"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+func NewFiberApp(cfg *config.Config) *fiber.App {
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+		//ErrorHandler:          middleware.ErrorHandler,
+	})
+
+	//{{- if .EnableRateLimiter}}
+	//app.Use(middleware.RateLimiterMiddleware(cfg))
+	//{{- end}}
+	{{- if .EnableCORS}}
+	app.Use(middleware.CorsMiddleware())
+	{{- end}}
+	
+	//if cfg.App.SwaggerEnabled {
+	//	app.Get("/swagger/*", middleware.SwaggerMiddleware())
+	//}
+
+	return app
+}
+
+func StartFiberApp(lifecycle fx.Lifecycle, app *fiber.App, logger *zap.Logger, cfg *config.Config) {
+	lifecycle.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			go func() {
+				logger.Info(fmt.Sprintf("🚀 Fiber server starting on :%s", cfg.Server.Port))
+
+				if err := app.Listen(fmt.Sprintf(":%s", cfg.Server.Port)); err != nil {
+					logger.Fatal("Fiber server failed to start", zap.Error(err))
+				}
+			}()
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			logger.Info("🛑 Shutting down Fiber server")
+			return app.Shutdown()
+		},
+	})
+}
+
+var Module = fx.Module("http",
+	handler.Module,
+	routes.Module,
+	fx.Provide(NewFiberApp),
+	fx.Invoke(StartFiberApp),
+)

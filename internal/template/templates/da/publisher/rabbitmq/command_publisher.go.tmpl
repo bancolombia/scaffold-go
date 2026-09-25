@@ -1,0 +1,54 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/reactive-commons-go/pkg/async"
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+)
+
+// {{.PublisherName}}Payload is the JSON shape sent as the "{{.Target}}" command.
+type {{.PublisherName}}Payload struct {
+	ID string `json:"id"`
+}
+
+// {{.PublisherName}}Publisher sends the "{{.Target}}" command point-to-point using
+// reactive-commons-go.
+type {{.PublisherName}}Publisher struct {
+	app    *rabbit.Application
+	logger *zap.Logger
+}
+
+// New{{.PublisherName}}Publisher is the fx constructor for {{.PublisherName}}Publisher.
+func New{{.PublisherName}}Publisher(app *rabbit.Application, logger *zap.Logger) *{{.PublisherName}}Publisher {
+	return &{{.PublisherName}}Publisher{
+		app:    app,
+		logger: logger,
+	}
+}
+
+// Send dispatches the command to the target service.
+func (p *{{.PublisherName}}Publisher) Send(ctx context.Context, target string, payload {{.PublisherName}}Payload) error {
+	cmd := async.Command[{{.PublisherName}}Payload]{
+		Name:      "{{.Target}}",
+		CommandID: uuid.NewString(),
+		Data:      payload,
+	}
+
+	p.logger.Info("sending command",
+		zap.String("command", cmd.Name),
+		zap.String("command_id", cmd.CommandID),
+		zap.String("target", target),
+	)
+
+	if err := p.app.Gateway().SendCommand(ctx, cmd, target); err != nil {
+		p.logger.Error("failed to send command",
+			zap.String("command", cmd.Name),
+			zap.Error(err),
+		)
+		return err
+	}
+	return nil
+}

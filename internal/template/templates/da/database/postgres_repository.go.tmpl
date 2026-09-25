@@ -1,0 +1,108 @@
+package database
+
+import (
+	"context"
+	"fmt"
+
+	"go.uber.org/zap"
+{{- if .ModulePath}}
+	"{{.ModulePath}}/internal/domain"
+{{- end}}
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+// minimal interface for database operations used by {{.EntityName}}Repository
+// This interface abstracts the database operations required by the {{.EntityName}}Repository.
+// It allows for easier testing and decouples the repository from a specific database implementation.
+// ADD ADITIONAL METHODS AS NEEDED
+type I{{.EntityName}}RepositoryDbRepo interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
+type {{.EntityName}}Repository struct {
+	pool I{{.EntityName}}RepositoryDbRepo
+	logger 	*zap.Logger
+}
+
+func New{{.EntityName}}Repository(pgadapter *PostgresAdapter, logger *zap.Logger) *{{.EntityName}}Repository {
+	return &{{.EntityName}}Repository{
+		pool:     pgadapter.pool,
+		logger: logger,
+	}
+}
+
+func (a *{{.EntityName}}Repository) Create(ctx context.Context, entity *domain.{{.EntityName}}) error {
+	query := `INSERT INTO {{.EntityName | toTableName}} ({{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}}{{end}}) VALUES ({{range $i, $f := .Fields}}{{if $i}}, {{end}}${{add $i 1}}{{end}})`
+
+	a.logger.Info("Creating entity", zap.String("table", "{{.EntityName | toTableName}}"))
+
+	// TODO: Extract values from entity and execute query
+	_, err := a.pool.Exec(ctx, query, entity.Name, entity.Email, entity.Age)
+	if err != nil {
+		a.logger.Error("Failed to create entity", zap.Error(err))
+		return fmt.Errorf("failed to create entity: %w", err)
+	}
+
+	return nil
+}
+
+func (a *{{.EntityName}}Repository) GetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {
+	query := `SELECT {{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}}{{end}} FROM {{.EntityName | toTableName}} WHERE id = $1`
+
+	a.logger.Info("Getting entity by ID", zap.String("id", id))
+
+	row := a.pool.QueryRow(ctx, query, id)
+
+	// TODO: Scan row into *domain.{{.EntityName}}
+	_ = row
+
+	return nil, nil
+}
+
+func (a *{{.EntityName}}Repository) Update(ctx context.Context, entity *domain.{{.EntityName}}) error {
+	query := `UPDATE {{.EntityName | toTableName}} SET {{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}} = ${{add $i 1}}{{end}} WHERE id = ${{add (len .Fields) 1}}`
+
+	a.logger.Info("Updating entity", zap.String("table", "{{.EntityName | toTableName}}"))
+
+	_, err := a.pool.Exec(ctx, query, entity.Name, entity.Email, entity.Age)
+	if err != nil {
+		a.logger.Error("Failed to update entity", zap.Error(err))
+		return fmt.Errorf("failed to update entity: %w", err)
+	}
+
+	return nil
+}
+
+func (a *{{.EntityName}}Repository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM {{.EntityName | toTableName}} WHERE id = $1`
+
+	a.logger.Info("Deleting entity", zap.String("id", id))
+
+	_, err := a.pool.Exec(ctx, query, id)
+	if err != nil {
+		a.logger.Error("Failed to delete entity", zap.Error(err))
+		return fmt.Errorf("failed to delete entity: %w", err)
+	}
+
+	return nil
+}
+
+func (a *{{.EntityName}}Repository) List(ctx context.Context, limit, offset int) ([]*domain.{{.EntityName}}, error) {
+	query := `SELECT {{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}}{{end}} FROM {{.EntityName | toTableName}} LIMIT $1 OFFSET $2`
+
+	a.logger.Info("Listing entities", zap.String("table", "{{.EntityName | toTableName}}"))
+
+	rows, err := a.pool.Query(ctx, query, limit, offset)
+	if err != nil {
+		a.logger.Error("Failed to list entities", zap.Error(err))
+		return nil, fmt.Errorf("failed to list entities: %w", err)
+	}
+	defer rows.Close()
+
+	// TODO: Scan rows into []*domain.{{.EntityName}}
+
+	return nil, nil
+}

@@ -1,0 +1,66 @@
+package database
+
+import (
+	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"os"
+	"go.uber.org/zap"
+{{- if .ModulePath}}
+
+	c "{{.ModulePath}}/config"
+{{- end}}
+)
+
+type DynamoDBAdapter struct {
+	client    *dynamodb.Client
+	tableName string
+	logger    *zap.Logger
+}
+
+func NewDynamoDBAdapter(cfg *c.Config, logger *zap.Logger) *DynamoDBAdapter {
+	_ = cfg // Currently not used, but kept for future configuration purposes
+
+    // 1. Load default configuration (automatically handles STS, IAM roles, env vars, ~/.aws/credentials)
+	aws_cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(cfg.DynamoDB.Region))
+	if err != nil {
+		logger.Fatal("unable to load SDK config", zap.Error(err))
+	}
+
+	// 2. Define custom options for DynamoDB client
+	var clientOpts []func(*dynamodb.Options)
+
+	// 3. Check for a local endpoint override (e.g., http://localhost:8000)
+	localEndpoint := os.Getenv("DYNAMODB_ENDPOINT")
+	if localEndpoint != "" {
+		clientOpts = append(clientOpts, func(o *dynamodb.Options) {
+			o.BaseEndpoint = aws.String(localEndpoint)
+			// DynamoDB local often requires dummy credentials if not already supplied
+			// o.Credentials = credentials.NewStaticCredentialsProvider("dummy", "dummy", "")
+		})
+	}
+
+	// 4. Create the DynamoDB client
+	client := dynamodb.NewFromConfig(aws_cfg, clientOpts...)
+
+	return &DynamoDBAdapter{
+		client:    client,
+		tableName: "{{.EntityName | toTableName}}",
+		logger:    logger,
+	}
+}
+
+func (p *DynamoDBAdapter) onStart(ctx context.Context) error {
+	p.logger.Info("📦 DynamoDB adapter started successfully.")
+	return nil
+}
+
+func (p *DynamoDBAdapter) onStop(ctx context.Context) error {
+	p.logger.Info("🔌 DynamoDB adapter stopping...")
+
+	// No explicit close needed for DynamoDB client
+	p.logger.Info("✅ DynamoDB adapter stopped successfully.")
+
+	return nil
+}

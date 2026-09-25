@@ -1,0 +1,16 @@
+package handler
+
+import "go.uber.org/fx"
+
+var Module = fx.Module("http_handlers",
+	fx.Provide(
+		fx.Annotate(
+			New{{.HandlerName}}Handler,
+			fx.As(new(I{{.HandlerName}}Handler)),
+		),
+		fx.Annotate(
+			NewHealthHandler,
+			fx.As(new(IHealthHandler)),
+		),
+	),
+)

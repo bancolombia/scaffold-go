@@ -1,0 +1,177 @@
+# {{.Name}}
+
+A Go microservice following clean architecture principles.
+
+## Project Structure
+
+```
+.
+├── cmd/                    # Application entry points
+│   └── main.go            # Main application with fx dependency injection
+├── config/                 # Configuration files
+│   ├── config.go          # Configuration struct and loader
+│   └── config.yaml        # Default configuration
+├── internal/
+│   ├── domain/            # Business logic and entities
+│   │   ├── entities       # Domain entities
+│   │   ├── use cases      # Business logic orchestration
+│   │   └── interfaces     # Repository and service contracts
+│   ├── entrypoints/       # External interfaces
+│   │   ├── http/          # HTTP handlers (Fiber)
+│   │   └── messaging/     # Message consumers
+│   └── drivenadapters/    # Infrastructure implementations
+│       ├── database/      # Database adapters
+│       ├── api/           # External API clients
+│       ├── messaging/     # Message publishers
+│       └── cache/         # Cache adapters
+└── README.md
+```
+
+## Architecture Layers
+
+### Domain Layer
+Contains core business logic, entities, use cases, and interfaces. No external dependencies.
+
+### EntryPoints Layer
+Handles external requests (HTTP, message queues) and calls domain use cases.
+
+### DrivenAdapters Layer
+Implements domain interfaces for external dependencies (databases, APIs, caches).
+
+## Dependency Injection with uber-go/fx
+
+This project uses [uber-go/fx](https://uber-go.github.io/fx/) for dependency injection. Each generated component includes an fx Module that can be wired into the main application.
+
+### Wiring Generated Modules
+
+`cmd/main.go` contains two pairs of marker comments:
+
+```go
+// scaffold-go:imports:begin
+// scaffold-go:imports:end
+```
+
+```go
+// scaffold-go:modules:begin
+// scaffold-go:modules:end
+```
+
+`scaffold-go generate ep consumer ...` and `scaffold-go generate da publisher ...`
+**automatically** insert the right import and module reference between these
+markers, so `cmd/main.go` is updated for you. Re-running the same generator is
+idempotent. If you remove the markers, the CLI prints a warning and you'll need
+to wire the new module by hand. The expected shape after wiring looks like:
+
+```go
+import (
+    "{{.ModulePath}}/internal/entrypoints/messaging" // package consumers
+    "{{.ModulePath}}/internal/drivenadapters/messaging" // package publishers
+)
+```
+
+## Getting Started
+
+```bash
+# Install dependencies
+go mod tidy
+
+# Run the application
+go run cmd/main.go
+
+# Build
+go build -o {{.Name}} cmd/main.go
+```
+
+## Generate Components
+
+The recommended order when adding a new feature is:
+**1.** entity → **2.** usecase → **3.** entry-point (`ep`) → **4.** driven-adapter (`da`).
+
+### Domain Layer
+
+```bash
+# Generate entity with repository interface
+scaffold-go generate entity User --fields Name:string,Email:string,Age:int
+
+# Generate use case
+scaffold-go generate usecase CreateUser --dependencies userRepo:UserRepository
+```
+
+### EntryPoints Layer (`ep`)
+
+```bash
+# Generate HTTP handler entry-point (Fiber)
+scaffold-go generate ep http User --usecases createUser:CreateUserUseCase --routes POST:/users:CreateUser
+
+# RabbitMQ consumer (event | command | query | notification)
+scaffold-go generate ep consumer OrderEventConsumer \
+  --broker rabbitmq --pattern event \
+  --usecases processOrder:ProcessOrderUseCase \
+  --queue order.created
+
+# IBM MQ listener (or requestreply)
+scaffold-go generate ep consumer InvoiceListener \
+  --broker ibmmq --pattern listener \
+  --queue DEV.QUEUE.INVOICES
+```
+
+### DrivenAdapters Layer (`da`)
+
+```bash
+# Generate database driven adapter (PostgreSQL, MongoDB, or DynamoDB)
+scaffold-go generate da database UserRepo --type postgres --entity User --fields Name:string,Email:string
+
+# Generate external API client
+scaffold-go generate da api PaymentClient --url https://api.payment.com
+
+# RabbitMQ publisher (event | command | query | notification)
+scaffold-go generate da publisher OrderEventPublisher \
+  --broker rabbitmq --pattern event \
+  --target order.created
+
+# IBM MQ sender (or requestreply)
+scaffold-go generate da publisher InvoiceSender \
+  --broker ibmmq --pattern sender \
+  --target DEV.QUEUE.INVOICES
+
+# Generate cache adapter
+scaffold-go generate da cache UserCache
+```
+
+### Messaging brokers
+
+`generate ep consumer` and `generate da publisher` are broker-aware and pull in
+the matching client library:
+
+| `--broker`  | Library                                                      |
+|-------------|--------------------------------------------------------------|
+| `rabbitmq`  | [bancolombia/reactive-commons-go](https://github.com/bancolombia/reactive-commons-go) |
+| `ibmmq`     | [bancolombia/commons-mq-go](https://github.com/bancolombia/commons-mq-go) (CGO + IBM MQ C client) |
+| `kafka`     | placeholder; the CLI returns "not implemented yet"           |
+
+The first generation per broker also emits a shared foundation module under
+`internal/infrastructure/messaging/<broker>/` that exposes the singleton client
+to all generated consumers and publishers. After running a messaging generator,
+remember to run `go mod tidy` to fetch the broker dependency.
+
+## Development Workflow
+
+1. Generate domain entities and use cases
+2. Generate entrypoints (handlers, consumers)
+3. Generate driven adapters (database, API clients, cache)
+4. Wire modules in `cmd/main.go`
+5. Implement business logic in use cases
+6. Run and test
+
+## Testing
+
+```bash
+# Run all tests
+go test ./...
+
+# Run tests with coverage
+go test -cover ./...
+
+# Run specific package tests
+go test ./internal/domain/...
+```

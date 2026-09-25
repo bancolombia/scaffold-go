@@ -1,0 +1,32 @@
+package database
+
+import (
+	"go.uber.org/fx"
+{{- if .ModulePath}}
+
+	"{{.ModulePath}}/internal/domain"
+{{- end}}
+)
+
+// Module provides database adapter dependencies as an fx Module.
+// The adapter is registered under the domain.{{.InterfaceName}} interface
+// so use cases that depend on the port resolve via fx without manual wiring.
+var Module = fx.Module("database",
+	fx.Provide({{if eq .DatabaseType "postgres"}}NewPostgresAdapter{{else if eq .DatabaseType "mongodb"}}NewMongoDBAdapter{{else if eq .DatabaseType "dynamodb"}}NewDynamoDBAdapter{{end}}),
+	fx.Invoke(func(lc fx.Lifecycle, db *{{if eq .DatabaseType "postgres"}}PostgresAdapter{{else if eq .DatabaseType "mongodb"}}MongoDBAdapter{{else if eq .DatabaseType "dynamodb"}}DynamoDBAdapter{{end}}) {
+		lc.Append(fx.Hook{
+			OnStart: db.onStart,
+			OnStop:  db.onStop,
+		})
+	}),
+	fx.Provide(
+{{- if .ModulePath}}
+		fx.Annotate(
+			New{{.EntityName}}Repository,
+			fx.As(new(domain.{{.InterfaceName}})),
+		),
+{{- else}}
+		New{{.EntityName}}Repository,
+{{- end}}
+	),
+)

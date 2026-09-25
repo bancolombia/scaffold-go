@@ -1,0 +1,271 @@
+package http
+
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+
+	"{{.ModulePath}}/internal/domain"
+)
+
+{{range .UseCases}}
+// Mock{{.}} is a mock implementation of {{.}}
+type Mock{{.}} struct {
+	mock.Mock
+}
+
+func (m *Mock{{.}}) Execute(ctx context.Context, input interface{}) (interface{}, error) {
+	args := m.Called(ctx, input)
+	return args.Get(0), args.Error(1)
+}
+{{end}}
+
+// Test{{.HandlerName}}_Routes tests route registration
+func Test{{.HandlerName}}_Routes(t *testing.T) {
+	// Setup
+	teardown := setupTest(t)
+	defer teardown()
+
+	{{range .UseCases}}
+	mock{{.}} := new(Mock{{.}})
+	{{end}}
+
+	logger := zap.NewNop()
+	handler := New{{.HandlerName}}(
+		{{range .UseCases}}
+		mock{{.}},
+		{{end}}
+		logger,
+	)
+
+	app := handler.GetApp()
+	require.NotNil(t, app)
+
+	// Test that routes are registered
+	routes := app.GetRoutes()
+	assert.NotEmpty(t, routes)
+}
+
+{{range .Routes}}
+// Test{{$.HandlerName}}_{{.Handler}} tests the {{.Handler}} handler
+func Test{{$.HandlerName}}_{{.Handler}}(t *testing.T) {
+	tests := []struct {
+		name           string
+		requestBody    interface{}
+		setup          func({{range $.UseCases}}*Mock{{.}}{{if not (isLast . $.UseCases)}}, {{end}}{{end}})
+		expectedStatus int
+		expectedBody   map[string]interface{}
+	}{
+		{
+			name:        "successful request",
+			requestBody: map[string]interface{}{},
+			setup: func({{range $.UseCases}}m{{.}} *Mock{{.}}{{if not (isLast . $.UseCases)}}, {{end}}{{end}}) {
+				// Setup mock expectations
+				{{range $.UseCases}}
+				// m{{.}}.On("Execute", mock.Anything, mock.Anything).Return(expectedResult, nil)
+				{{end}}
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: map[string]interface{}{
+				"status": "ok",
+			},
+		},
+		{
+			name:        "invalid request",
+			requestBody: map[string]interface{}{},
+			setup: func({{range $.UseCases}}m{{.}} *Mock{{.}}{{if not (isLast . $.UseCases)}}, {{end}}{{end}}) {
+				// Setup mock expectations for error case
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: map[string]interface{}{
+				"error": "invalid request",
+			},
+		},
+		{
+			name:        "internal server error",
+			requestBody: map[string]interface{}{},
+			setup: func({{range $.UseCases}}m{{.}} *Mock{{.}}{{if not (isLast . $.UseCases)}}, {{end}}{{end}}) {
+				{{range $.UseCases}}
+				// m{{.}}.On("Execute", mock.Anything, mock.Anything).Return(nil, errors.New("internal error"))
+				{{end}}
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody: map[string]interface{}{
+				"error": "internal server error",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			teardown := setupTest(t)
+			defer teardown()
+
+			{{range $.UseCases}}
+			mock{{.}} := new(Mock{{.}})
+			{{end}}
+
+			if tt.setup != nil {
+				tt.setup({{range $.UseCases}}mock{{.}}{{if not (isLast . $.UseCases)}}, {{end}}{{end}})
+			}
+
+			logger := zap.NewNop()
+			handler := New{{$.HandlerName}}(
+				{{range $.UseCases}}
+				mock{{.}},
+				{{end}}
+				logger,
+			)
+
+			app := handler.GetApp()
+
+			// Create request
+			var body io.Reader
+			if tt.requestBody != nil {
+				jsonBody, err := json.Marshal(tt.requestBody)
+				require.NoError(t, err)
+				body = bytes.NewReader(jsonBody)
+			}
+
+			req := httptest.NewRequest("{{.Method}}", "{{.Path}}", body)
+			req.Header.Set("Content-Type", "application/json")
+
+			// Execute
+			resp, err := app.Test(req)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			// Assert
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			if tt.expectedBody != nil {
+				var responseBody map[string]interface{}
+				err = json.NewDecoder(resp.Body).Decode(&responseBody)
+				require.NoError(t, err)
+
+				for key, expectedValue := range tt.expectedBody {
+					assert.Equal(t, expectedValue, responseBody[key])
+				}
+			}
+
+			{{range $.UseCases}}
+			mock{{.}}.AssertExpectations(t)
+			{{end}}
+		})
+	}
+}
+{{end}}
+
+{{if .EnableCORS}}
+// Test{{.HandlerName}}_CORS tests CORS middleware
+func Test{{.HandlerName}}_CORS(t *testing.T) {
+	// Setup
+	teardown := setupTest(t)
+	defer teardown()
+
+	{{range .UseCases}}
+	mock{{.}} := new(Mock{{.}})
+	{{end}}
+
+	logger := zap.NewNop()
+	handler := New{{.HandlerName}}(
+		{{range .UseCases}}
+		mock{{.}},
+		{{end}}
+		logger,
+	)
+
+	app := handler.GetApp()
+
+	// Create OPTIONS request
+	req := httptest.NewRequest("OPTIONS", "/", nil)
+	req.Header.Set("Origin", "http://example.com")
+
+	// Execute
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Assert CORS headers are present
+	assert.NotEmpty(t, resp.Header.Get("Access-Control-Allow-Origin"))
+}
+{{end}}
+
+{{if .EnableRateLimiter}}
+// Test{{.HandlerName}}_RateLimiter tests rate limiter middleware
+func Test{{.HandlerName}}_RateLimiter(t *testing.T) {
+	// Setup
+	teardown := setupTest(t)
+	defer teardown()
+
+	{{range .UseCases}}
+	mock{{.}} := new(Mock{{.}})
+	{{end}}
+
+	logger := zap.NewNop()
+	handler := New{{.HandlerName}}(
+		{{range .UseCases}}
+		mock{{.}},
+		{{end}}
+		logger,
+	)
+
+	app := handler.GetApp()
+
+	// Make multiple requests to trigger rate limiter
+	for i := 0; i < 150; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		resp, err := app.Test(req)
+		require.NoError(t, err)
+		resp.Body.Close()
+
+		if i >= 100 {
+			// Should be rate limited after 100 requests
+			assert.Equal(t, fiber.StatusTooManyRequests, resp.StatusCode)
+		}
+	}
+}
+{{end}}
+
+// Benchmark{{.HandlerName}}_Handler benchmarks handler performance
+func Benchmark{{.HandlerName}}_Handler(b *testing.B) {
+	{{range .UseCases}}
+	mock{{.}} := new(Mock{{.}})
+	{{end}}
+
+	logger := zap.NewNop()
+	handler := New{{.HandlerName}}(
+		{{range .UseCases}}
+		mock{{.}},
+		{{end}}
+		logger,
+	)
+
+	app := handler.GetApp()
+
+	req := httptest.NewRequest("GET", "/", nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		resp, _ := app.Test(req)
+		resp.Body.Close()
+	}
+}
+
+// setupTest provides common test setup
+func setupTest(t *testing.T) func() {
+	// Setup code here
+	return func() {
+		// Teardown code here
+	}
+}

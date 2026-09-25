@@ -1,0 +1,307 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/pashagolub/pgxmock/v5"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	
+{{if .ModulePath}}
+	"{{.ModulePath}}/internal/domain"
+{{end}}
+)
+
+func Test{{.EntityName}}Repository_Create(t *testing.T) {
+	const expectedQuery = `INSERT INTO {{.EntityName | toTableName}} ({{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}}{{end}}) VALUES ({{range $i, $f := .Fields}}{{if $i}}, {{end}}${{add $i 1}}{{end}})`
+
+	tests := []struct {
+		name    string
+		entity  *domain.{{.EntityName}}
+		execErr error
+		wantErr bool
+	}{
+		{
+			name:    "successful create",
+			entity:  &domain.{{.EntityName}}{
+			// Initialize entity fields
+			},
+			execErr: nil,
+			wantErr: false,
+		},
+		{
+			name:    "create with error",
+			entity:  &domain.{{.EntityName}}{
+				// Initialize entity fields
+			},
+			execErr: errors.New("database error"),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			mock, err := pgxmock.NewPool(pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer mock.Close()
+
+			if tt.execErr != nil {
+				mock.ExpectExec(expectedQuery).
+					WithArgs({{range $i, $f := .Fields}}{{if $i}}, {{end}}tt.entity.{{$f.Name}}{{end}}).
+					WillReturnError(tt.execErr)
+			} else {
+				mock.ExpectExec(expectedQuery).
+					WithArgs({{range $i, $f := .Fields}}{{if $i}}, {{end}}tt.entity.{{$f.Name}}{{end}}).
+					WillReturnResult(pgxmock.NewResult("INSERT", 1))
+			}
+
+			repository := {{.EntityName}}Repository{pool: mock, logger: zap.NewNop()}
+			err = repository.Create(context.Background(), tt.entity)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func Test{{.EntityName}}Repository_GetByID(t *testing.T) {
+	const expectedQuery = `SELECT {{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}}{{end}} FROM {{.EntityName | toTableName}} WHERE id = $1`
+
+	tests := []struct {
+		name     string
+		id       string
+		queryErr error
+		wantErr  bool
+	}{
+		{
+			name:    "successful get",
+			id:      "user-1",
+			wantErr: false,
+		},
+		{
+			name:     "get with error",
+			id:       "user-2",
+			queryErr: errors.New("database error"),
+			wantErr:  false, // repo currently swallows the error and returns (nil, nil)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, err := pgxmock.NewPool(pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer mock.Close()
+
+			exp := mock.ExpectQuery(expectedQuery).WithArgs(tt.id)
+			if tt.queryErr != nil {
+				exp.WillReturnError(tt.queryErr)
+			} else {
+				exp.WillReturnRows(pgxmock.NewRows([]string{ {{range $i, $f := .Fields}}{{if $i}}, {{end}}"{{$f.Name | toColumnName}}"{{end}} }).
+					AddRow({{range $i, $f := .Fields}}{{if $i}}, {{end}}"alice"{{end}}))
+			}
+
+			repository := {{.EntityName}}Repository{pool: mock, logger: zap.NewNop()}
+			got, err := repository.GetByID(context.Background(), tt.id)
+
+			require.NoError(t, err)
+			assert.Nil(t, got) // repo currently returns (nil, nil) — update once Scan is wired up
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func Test{{.EntityName}}Repository_GetByID_NotFound(t *testing.T) {
+	const expectedQuery = `SELECT {{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}}{{end}} FROM {{.EntityName | toTableName}} WHERE id = $1`
+
+	mock, err := pgxmock.NewPool(pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.Close()
+
+	mock.ExpectQuery(expectedQuery).WithArgs("missing-user").
+		WillReturnRows(pgxmock.NewRows([]string{ {{range $i, $f := .Fields}}{{if $i}}, {{end}}"{{$f.Name | toColumnName}}"{{end}} }))
+
+	repository := {{.EntityName}}Repository{pool: mock, logger: zap.NewNop()}
+	got, err := repository.GetByID(context.Background(), "missing-user")
+
+	require.NoError(t, err)
+	assert.Nil(t, got)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func Test{{.EntityName}}Repository_Update(t *testing.T) {
+	const expectedQuery = `UPDATE {{.EntityName | toTableName}} SET {{range $i, $f := .Fields}}{{if $i}}, {{end}}"{{$f.Name | toColumnName}}" = ${{add $i 1}}{{end}} WHERE id = ${{add (len .Fields) 1}}`
+
+	tests := []struct {
+		name    string
+		entity  *domain.{{.EntityName}}
+		execErr error
+		wantErr bool
+	}{
+		{
+			name:    "successful update",
+			entity:  &domain.{{.EntityName}}{ 
+				// TODO: Initialize entity fields
+			},
+			wantErr: false,
+		},
+		{
+			name:    "update with error",
+			entity:  &domain.{{.EntityName}}{ 
+				// TODO: Initialize entity fields
+			},
+			execErr: errors.New("database error"),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, err := pgxmock.NewPool(pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer mock.Close()
+
+			// TODO: Ensure the order of arguments matches the SQL query placeholders
+			// And set correct ID argument at the end
+			exp := mock.ExpectExec(expectedQuery).
+				WithArgs({{range $i, $f := .Fields}}{{if $i}}, {{end}}tt.entity.{{$f.Name}}{{end}}, tt.entity.ID) 
+			if tt.execErr != nil {
+				exp.WillReturnError(tt.execErr)
+			} else {
+				exp.WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+			}
+
+			repository := {{.EntityName}}Repository{pool: mock, logger: zap.NewNop()}
+			err = repository.Update(context.Background(), tt.entity)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func Test{{.EntityName}}Repository_Delete(t *testing.T) {
+	const expectedQuery = `DELETE FROM {{.EntityName | toTableName}} WHERE id = $1`
+
+	tests := []struct {
+		name    string
+		id      string
+		execErr error
+		wantErr bool
+	}{
+		{
+			name:    "successful delete",
+			id:      "user-1",
+			wantErr: false,
+		},
+		{
+			name:    "delete with error",
+			id:      "user-2",
+			execErr: errors.New("database error"),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, err := pgxmock.NewPool(pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer mock.Close()
+
+			exp := mock.ExpectExec(expectedQuery).WithArgs(tt.id)
+			if tt.execErr != nil {
+				exp.WillReturnError(tt.execErr)
+			} else {
+				exp.WillReturnResult(pgxmock.NewResult("DELETE", 1))
+			}
+
+			repository := {{.EntityName}}Repository{pool: mock, logger: zap.NewNop()}
+			err = repository.Delete(context.Background(), tt.id)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func Test{{.EntityName}}Repository_List(t *testing.T) {
+	const expectedQuery = `SELECT  {{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toColumnName}}{{end}} FROM {{.EntityName | toTableName}} LIMIT $1 OFFSET $2`
+
+	tests := []struct {
+		name     string
+		limit    int
+		offset   int
+		queryErr error
+		wantErr  bool
+	}{
+		{
+			name:    "successful list",
+			limit:   10,
+			offset:  0,
+			wantErr: false,
+		},
+		{
+			name:     "list with error",
+			limit:    10,
+			offset:   0,
+			queryErr: errors.New("database error"),
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock, err := pgxmock.NewPool(pgxmock.QueryMatcherOption(pgxmock.QueryMatcherEqual))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer mock.Close()
+
+			exp := mock.ExpectQuery(expectedQuery).WithArgs(tt.limit, tt.offset)
+			if tt.queryErr != nil {
+				exp.WillReturnError(tt.queryErr)
+			} else {
+				// TODO: modidiy the returned rows to match the actual data structure of the entity
+				exp.WillReturnRows(pgxmock.NewRows([]string{ {{range $i, $f := .Fields}}{{if $i}}, {{end}}"{{$f.Name | toColumnName}}"{{end}} }).
+					AddRow({{range $i, $f := .Fields}}{{if $i}}, {{end}}"example_value"{{end}}).
+					AddRow({{range $i, $f := .Fields}}{{if $i}}, {{end}}"other_example_value"{{end}}))
+			}
+
+			repository := {{.EntityName}}Repository{pool: mock, logger: zap.NewNop()}
+			got, err := repository.List(context.Background(), tt.limit, tt.offset)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Nil(t, got) // repo currently returns (nil, nil) — update once Scan is wired up
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}

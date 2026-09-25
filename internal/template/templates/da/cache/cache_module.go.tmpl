@@ -1,0 +1,10 @@
+package cache
+
+import "go.uber.org/fx"
+
+// Module provides cache adapter dependencies as an fx Module
+var Module = fx.Module("cache",
+	fx.Provide(
+		New{{.CacheName}}Cache,
+	),
+)

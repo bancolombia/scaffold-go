@@ -1,0 +1,26 @@
+package routes
+
+import (
+	{{- if .ModulePath}}
+	"{{.ModulePath}}/internal/entrypoints/http/handler"
+	//"{{.ModulePath}}/internal/domain" //uncomment when ready to reference domain entities
+	{{- end}}
+	"github.com/gofiber/fiber/v2"
+)
+
+type {{.HandlerName}}Router struct {
+	handler handler.I{{.HandlerName}}Handler
+}
+
+func New{{.HandlerName}}Router(handler handler.I{{.HandlerName}}Handler) *{{.HandlerName}}Router {
+	return &{{.HandlerName}}Router{
+		handler: handler,
+	}
+}
+
+func (r *{{.HandlerName}}Router) SetupRoutes(router fiber.Router) {
+	{{.HandlerName | toLower}}Router := router.Group("/{{.HandlerName | toLower}}s")
+	{{range .Routes}}
+	{{$.HandlerName | toLower}}Router.{{.Method}}("/", r.handler.{{.Handler}})
+	{{end}}
+}

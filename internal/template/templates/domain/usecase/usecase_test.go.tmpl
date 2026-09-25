@@ -1,0 +1,221 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"testing"
+	"{{.ModulePath}}/internal/domain"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+{{range .Dependencies}}
+// Mock{{.Type}}{{$.UseCaseName}} is a mock implementation of {{.Type}}
+type Mock{{.Type}}{{$.UseCaseName}} struct {
+	mock.Mock
+}
+
+// Implement common repository methods for Mock{{.Type}}{{$.UseCaseName}}
+// Add or modify these methods based on your {{.Type}} interface
+{{if .EntityType}}
+func (m *Mock{{.Type}}{{$.UseCaseName}}) Create(ctx context.Context, entity *domain.{{.EntityType}}) error {
+	args := m.Called(ctx, entity)
+	return args.Error(0)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) GetByID(ctx context.Context, id string) (*domain.{{.EntityType}}, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.{{.EntityType}}), args.Error(1)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) Update(ctx context.Context, entity *domain.{{.EntityType}}) error {
+	args := m.Called(ctx, entity)
+	return args.Error(0)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) Delete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) List(ctx context.Context, limit, offset int) ([]*domain.{{.EntityType}}, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.{{.EntityType}}), args.Error(1)
+}
+{{else}}
+func (m *Mock{{.Type}}{{$.UseCaseName}}) Create(ctx context.Context, entity interface{}) error {
+	args := m.Called(ctx, entity)
+	return args.Error(0)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) GetByID(ctx context.Context, id string) (interface{}, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0), args.Error(1)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) Update(ctx context.Context, entity interface{}) error {
+	args := m.Called(ctx, entity)
+	return args.Error(0)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) Delete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *Mock{{.Type}}{{$.UseCaseName}}) List(ctx context.Context, limit, offset int) (interface{}, error) {
+	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0), args.Error(1)
+}
+{{end}}
+{{end}}
+
+// Test{{.UseCaseName}}_Execute tests the Execute method
+func Test{{.UseCaseName}}_Execute(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   {{.InputType}}
+		setup   func({{range $i, $dep := .Dependencies}}{{if $i}}, {{end}}*Mock{{$dep.Type}}{{$.UseCaseName}}{{end}})
+		want    {{.OutputType}}
+		wantErr bool
+	}{
+		{
+			name:  "successful execution",
+			input: {{.InputType | testValue}},
+			setup: func({{range $i, $dep := .Dependencies}}{{if $i}}, {{end}}m{{$dep.Type}} *Mock{{$dep.Type}}{{$.UseCaseName}}{{end}}) {
+				// Setup mock expectations
+				{{range .Dependencies}}
+				// m{{.Type}}.On("MethodName", mock.Anything).Return(nil)
+				{{end}}
+			},
+			want:    {{.OutputType | testValue}},
+			wantErr: false,
+		},
+		{
+			name:  "execution with error",
+			input: {{.InputType | testValue}},
+			setup: func({{range $i, $dep := .Dependencies}}{{if $i}}, {{end}}m{{$dep.Type}} *Mock{{$dep.Type}}{{$.UseCaseName}}{{end}}) {
+				// Setup mock expectations for error case
+				{{range .Dependencies}}
+				// m{{.Type}}.On("MethodName", mock.Anything).Return(errors.New("mock error"))
+				{{end}}
+			},
+			want:    {{.OutputType | zeroValue}},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			teardown := setupTestFor{{.UseCaseName}}UseCase(t)
+			defer teardown()
+
+			{{range .Dependencies}}
+			mock{{.Type}} := new(Mock{{.Type}}{{$.UseCaseName}})
+			{{end}}
+
+			if tt.setup != nil {
+				tt.setup({{range $i, $dep := .Dependencies}}{{if $i}}, {{end}}mock{{$dep.Type}}{{end}})
+			}
+
+			logger := zap.NewNop()
+			uc := New{{.UseCaseName}}UseCase(
+				{{range .Dependencies}}
+				mock{{.Type}},
+				{{end}}
+				logger,
+			)
+
+			// Execute
+			ctx := context.Background()
+			got, err := uc.Execute(ctx, tt.input)
+
+			// Assert
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+
+			{{range .Dependencies}}
+			mock{{.Type}}.AssertExpectations(t)
+			{{end}}
+		})
+	}
+}
+
+// Test{{.UseCaseName}}_Execute_ContextCancellation tests context cancellation
+func Test{{.UseCaseName}}_Execute_ContextCancellation(t *testing.T) {
+	// Setup
+	teardown := setupTestFor{{.UseCaseName}}UseCase(t)
+	defer teardown()
+
+	{{range .Dependencies}}
+	mock{{.Type}} := new(Mock{{.Type}}{{$.UseCaseName}})
+	{{end}}
+
+	logger := zap.NewNop()
+	uc := New{{.UseCaseName}}UseCase(
+		{{range .Dependencies}}
+		mock{{.Type}}, 
+		{{end}}
+		logger,
+	)
+
+	// Create cancelled context
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	// Execute
+	input := 0 //change this for required type or value
+	_, err := uc.Execute(ctx, input)
+
+	// Assert
+	assert.Error(t, err)
+}
+
+// Benchmark{{.UseCaseName}}_Execute benchmarks the Execute method
+func Benchmark{{.UseCaseName}}_Execute(b *testing.B) {
+	{{range .Dependencies}}
+	mock{{.Type}} := new(Mock{{.Type}}{{$.UseCaseName}})
+	{{end}}
+
+	logger := zap.NewNop()
+	uc := New{{.UseCaseName}}UseCase(
+		{{range .Dependencies}}
+		mock{{.Type}}, 
+		{{end}}
+		logger,
+	)
+
+	ctx := context.Background()
+	input := 0 //change this for required type or value
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = uc.Execute(ctx, input)
+	}
+}
+
+// setupTestFor{{.UseCaseName}}UseCase provides common test setup
+func setupTestFor{{.UseCaseName}}UseCase(t *testing.T) func() {
+	// Setup code here
+	return func() {
+		// Teardown code here
+	}
+}

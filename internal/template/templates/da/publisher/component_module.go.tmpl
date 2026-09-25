@@ -1,0 +1,10 @@
+package {{.PackageName}}
+
+import "go.uber.org/fx"
+
+// {{.PublisherName}}Module wires the {{.PublisherName}}Publisher into the fx graph.
+// One module file is generated per publisher so that re-running the generator
+// for a different publisher does not overwrite the previous one.
+var {{.PublisherName}}Module = fx.Options(
+	fx.Provide(New{{.PublisherName}}Publisher),
+)

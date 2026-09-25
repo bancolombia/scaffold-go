@@ -1,0 +1,57 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/commons-mq-go/mq"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// {{.ConsumerName}}Consumer serves request/reply on the IBM MQ "{{.Queue}}"
+// queue: it consumes incoming requests, builds a response, and sends it back
+// to the reply-to queue declared in the request headers.
+type {{.ConsumerName}}Consumer struct {
+{{- range .UseCases}}
+	{{.Name}} {{.Type}}
+{{- end}}
+	client *mq.Client
+	logger *zap.Logger
+}
+
+// New{{.ConsumerName}}Consumer is the fx constructor for {{.ConsumerName}}Consumer.
+func New{{.ConsumerName}}Consumer({{range $i, $uc := .UseCases}}{{if $i}}, {{end}}{{$uc.Name}} {{$uc.Type}}{{end}}{{if .UseCases}}, {{end}}client *mq.Client, logger *zap.Logger) *{{.ConsumerName}}Consumer {
+	return &{{.ConsumerName}}Consumer{
+{{- range .UseCases}}
+		{{.Name}}: {{.Name}},
+{{- end}}
+		client: client,
+		logger: logger,
+	}
+}
+
+// Handle receives the request, derives a response, and dispatches it to the
+// reply-to queue carried on the original message.
+func (c *{{.ConsumerName}}Consumer) Handle(ctx context.Context, msg *mq.Message) error {
+	c.logger.Info("received ibm mq request",
+		zap.String("queue", "{{.Queue}}"),
+		zap.Int("size", len(msg.Body)),
+	)
+
+	// TODO: build the response by invoking the appropriate use case(s) and
+	//       forward it to the reply-to queue using c.client.NewSender(...).
+	_ = msg.ReplyToQueue
+
+	return nil
+}
+
+// Register{{.ConsumerName}} starts the IBM MQ listener during fx OnStart.
+func Register{{.ConsumerName}}(lc fx.Lifecycle, client *mq.Client, c *{{.ConsumerName}}Consumer, logger *zap.Logger) {
+	listener := client.NewListener("{{.Queue}}")
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			logger.Info("starting ibm mq request/reply listener", zap.String("queue", "{{.Queue}}"))
+			return listener.Start(ctx, c.Handle)
+		},
+	})
+}

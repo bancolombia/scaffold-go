@@ -1,0 +1,101 @@
+package cache
+
+import (
+	"context"
+	"encoding/json"
+	"time"
+
+	"go.uber.org/zap"
+)
+
+type {{.CacheName}}Cache struct {
+	// TODO: Add cache connection (e.g., *redis.Client)
+	logger *zap.Logger
+	ttl    time.Duration
+}
+
+func New{{.CacheName}}Cache(logger *zap.Logger) *{{.CacheName}}Cache {
+	return &{{.CacheName}}Cache{
+		logger: logger,
+		ttl:    5 * time.Minute, // Default TTL
+	}
+}
+
+func (c *{{.CacheName}}Cache) Get(ctx context.Context, key string, dest interface{}) error {
+	c.logger.Debug("Getting from cache", zap.String("key", key))
+
+	// TODO: Implement actual cache get logic
+	// Example for Redis:
+	// val, err := c.client.Get(ctx, key).Result()
+	// if err == redis.Nil {
+	//     return ErrCacheMiss
+	// }
+	// if err != nil {
+	//     c.logger.Error("Failed to get from cache", zap.Error(err))
+	//     return err
+	// }
+	// return json.Unmarshal([]byte(val), dest)
+
+	return nil
+}
+
+func (c *{{.CacheName}}Cache) Set(ctx context.Context, key string, value interface{}) error {
+	c.logger.Debug("Setting cache", zap.String("key", key))
+
+	_, err := json.Marshal(value)
+	if err != nil {
+		c.logger.Error("Failed to marshal value", zap.Error(err))
+		return err
+	}
+
+	// TODO: Implement actual cache set logic with TTL
+	// Example for Redis:
+	// data, err := json.Marshal(value)
+	// if err != nil {
+	//     c.logger.Error("Failed to marshal value", zap.Error(err))
+	//     return err
+	// }
+	// err = c.client.Set(ctx, key, data, c.ttl).Err()
+	// if err != nil {
+	//     c.logger.Error("Failed to set cache", zap.Error(err))
+	//     return err
+	// }
+
+	c.logger.Debug("Cache set successfully", 
+		zap.String("key", key), 
+		zap.Duration("ttl", c.ttl))
+	return nil
+}
+
+func (c *{{.CacheName}}Cache) Delete(ctx context.Context, key string) error {
+	c.logger.Debug("Deleting from cache", zap.String("key", key))
+
+	// TODO: Implement actual cache delete logic
+	// Example for Redis:
+	// err := c.client.Del(ctx, key).Err()
+	// if err != nil {
+	//     c.logger.Error("Failed to delete from cache", zap.Error(err))
+	//     return err
+	// }
+
+	return nil
+}
+
+func (c *{{.CacheName}}Cache) Exists(ctx context.Context, key string) (bool, error) {
+	c.logger.Debug("Checking cache existence", zap.String("key", key))
+
+	// TODO: Implement actual cache exists logic
+	// Example for Redis:
+	// count, err := c.client.Exists(ctx, key).Result()
+	// if err != nil {
+	//     c.logger.Error("Failed to check cache existence", zap.Error(err))
+	//     return false, err
+	// }
+	// return count > 0, nil
+
+	return false, nil
+}
+
+func (c *{{.CacheName}}Cache) SetTTL(ttl time.Duration) {
+	c.ttl = ttl
+}

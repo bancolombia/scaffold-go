@@ -1,0 +1,58 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/reactive-commons-go/pkg/async"
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// {{.ConsumerName}}Payload is the JSON shape received for "{{.Queue}}" notifications.
+type {{.ConsumerName}}Payload struct {
+	ID string `json:"id"`
+}
+
+// {{.ConsumerName}}Consumer listens to the "{{.Queue}}" notification using
+// reactive-commons-go. Notifications use auto-delete queues, so late-joining
+// subscribers will not receive missed messages.
+type {{.ConsumerName}}Consumer struct {
+{{- range .UseCases}}
+	{{.Name}} {{.Type}}
+{{- end}}
+	logger *zap.Logger
+}
+
+// New{{.ConsumerName}}Consumer is the fx constructor for {{.ConsumerName}}Consumer.
+func New{{.ConsumerName}}Consumer({{range $i, $uc := .UseCases}}{{if $i}}, {{end}}{{$uc.Name}} {{$uc.Type}}{{end}}{{if .UseCases}}, {{end}}logger *zap.Logger) *{{.ConsumerName}}Consumer {
+	return &{{.ConsumerName}}Consumer{
+{{- range .UseCases}}
+		{{.Name}}: {{.Name}},
+{{- end}}
+		logger: logger,
+	}
+}
+
+// Handle is invoked by reactive-commons-go for every notification.
+func (c *{{.ConsumerName}}Consumer) Handle(ctx context.Context, n async.Notification[{{.ConsumerName}}Payload]) error {
+	c.logger.Info("received notification",
+		zap.String("event", n.Name),
+		zap.String("event_id", n.EventID),
+	)
+
+	// TODO: invoke the appropriate use case(s) using c.<usecase>.Execute(ctx, ...)
+
+	return nil
+}
+
+// Register{{.ConsumerName}} attaches the consumer to the rabbit application
+// during fx OnStart.
+func Register{{.ConsumerName}}(lc fx.Lifecycle, app *rabbit.Application, c *{{.ConsumerName}}Consumer, logger *zap.Logger) {
+	lc.Append(fx.Hook{
+		OnStart: func(_ context.Context) error {
+			logger.Info("registering rabbitmq notification listener", zap.String("event", "{{.Queue}}"))
+			return app.Registry().ListenNotification("{{.Queue}}", c.Handle)
+		},
+	})
+}

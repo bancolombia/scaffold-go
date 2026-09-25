@@ -1,0 +1,167 @@
+package database
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"go.uber.org/zap"
+{{- if .ModulePath}}
+
+	"{{.ModulePath}}/internal/domain"
+{{- end}}
+)
+
+
+// minimal interface for database operations used by {{.EntityName}}Repository
+// This interface abstracts the database operations required by the {{.EntityName}}Repository.
+// It allows for easier testing and decouples the repository from a specific database implementation.
+// ADD ADITIONAL METHODS AS NEEDED
+type I{{.EntityName}}DynamoDBGateway interface {
+	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
+	GetItem(ctx context.Context, params *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
+	Scan(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error)
+	DeleteItem(ctx context.Context, params *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error)
+}
+
+type {{.EntityName}}Repository struct {
+	client I{{.EntityName}}DynamoDBGateway
+	tableName string
+	logger 	*zap.Logger
+}
+
+func New{{.EntityName}}Repository(dynamoAdapter *DynamoDBAdapter, logger *zap.Logger) *{{.EntityName}}Repository {
+	return &{{.EntityName}}Repository{
+		client:     dynamoAdapter.client,
+		tableName:  dynamoAdapter.tableName,
+		logger: logger,
+	}
+}
+
+func (a *{{.EntityName}}Repository ) Create(ctx context.Context, entity *domain.{{.EntityName}}) error {
+	a.logger.Info("Creating entity", zap.String("table", a.tableName))
+
+	av, err := attributevalue.MarshalMap(entity)
+	if err != nil {
+		a.logger.Error("Failed to marshal entity", zap.Error(err))
+		return fmt.Errorf("failed to marshal entity: %w", err)
+	}
+
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(a.tableName),
+		Item:      av,
+	}
+
+	_, err = a.client.PutItem(ctx, input)
+	if err != nil {
+		a.logger.Error("Failed to create entity", zap.Error(err))
+		return fmt.Errorf("failed to create entity: %w", err)
+	}
+
+	return nil
+}
+
+func (a *{{.EntityName}}Repository) GetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {
+	a.logger.Info("Getting entity by ID", zap.String("id", id))
+
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(a.tableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: id},
+		},
+	}
+
+	result, err := a.client.GetItem(ctx, input)
+	if err != nil {
+		a.logger.Error("Failed to get entity", zap.Error(err))
+		return nil, fmt.Errorf("failed to get entity: %w", err)
+	}
+
+	if result.Item == nil {
+		return nil, nil
+	}
+
+	var entity domain.{{.EntityName}}
+	if err := attributevalue.UnmarshalMap(result.Item, &entity); err != nil {
+		a.logger.Error("Failed to unmarshal entity", zap.Error(err))
+		return nil, fmt.Errorf("failed to unmarshal entity: %w", err)
+	}
+
+	return &entity, nil
+}
+
+func (a *{{.EntityName}}Repository) Update(ctx context.Context, entity *domain.{{.EntityName}}) error {
+	a.logger.Info("Updating entity", zap.String("table", a.tableName))
+
+	av, err := attributevalue.MarshalMap(entity)
+	if err != nil {
+		a.logger.Error("Failed to marshal entity", zap.Error(err))
+		return fmt.Errorf("failed to marshal entity: %w", err)
+	}
+
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(a.tableName),
+		Item:      av,
+	}
+
+	_, err = a.client.PutItem(ctx, input)
+	if err != nil {
+		a.logger.Error("Failed to update entity", zap.Error(err))
+		return fmt.Errorf("failed to update entity: %w", err)
+	}
+
+	return nil
+}
+
+func (a *{{.EntityName}}Repository) Delete(ctx context.Context, id string) error {
+	a.logger.Info("Deleting entity", zap.String("id", id))
+
+	input := &dynamodb.DeleteItemInput{
+		TableName: aws.String(a.tableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: id},
+		},
+	}
+
+	_, err := a.client.DeleteItem(ctx, input)
+	if err != nil {
+		a.logger.Error("Failed to delete entity", zap.Error(err))
+		return fmt.Errorf("failed to delete entity: %w", err)
+	}
+
+	return nil
+}
+
+// List returns up to `limit` items from the table.
+// DynamoDB has no native offset; for true pagination, switch to
+// ExclusiveStartKey driven by the last evaluated key from a prior call.
+func (a *{{.EntityName}}Repository) List(ctx context.Context, limit, offset int) ([]*domain.{{.EntityName}}, error) {
+	a.logger.Info("Listing entities", zap.String("table", a.tableName))
+
+	input := &dynamodb.ScanInput{
+		TableName: aws.String(a.tableName),
+		Limit:     aws.Int32(int32(limit)),
+	}
+
+	result, err := a.client.Scan(ctx, input)
+	if err != nil {
+		a.logger.Error("Failed to list entities", zap.Error(err))
+		return nil, fmt.Errorf("failed to list entities: %w", err)
+	}
+
+	entities := make([]*domain.{{.EntityName}}, 0, len(result.Items))
+	for _, item := range result.Items {
+		var entity domain.{{.EntityName}}
+		if err := attributevalue.UnmarshalMap(item, &entity); err != nil {
+			a.logger.Error("Failed to unmarshal entity", zap.Error(err))
+			continue
+		}
+		entities = append(entities, &entity)
+	}
+
+	return entities, nil
+}
+

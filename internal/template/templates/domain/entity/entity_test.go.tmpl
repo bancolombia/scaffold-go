@@ -1,0 +1,125 @@
+package domain
+
+import (
+	"testing"
+{{if .HasTimeFields}}
+	"time"
+{{end}}
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// TestNew{{.EntityName}} tests the creation of {{.EntityName}}
+func TestNew{{.EntityName}}(t *testing.T) {
+	tests := []struct {
+		testScenarioName    string
+		{{range .Fields}}
+		{{.Name | toLower}} {{.Type}}
+		{{end}}
+		wantErr bool
+	}{
+		{
+			testScenarioName: "valid {{.EntityName | toLower}}",
+			{{range .Fields}}
+			{{.Name | toLower}}: {{.Type | testValue}},
+			{{end}}
+			wantErr: false,
+		},
+		{{range .Fields}}
+		{{if .Required}}
+		{
+			testScenarioName: "missing {{.Name | toLower}}",
+			{{range $.Fields}}
+			{{if ne .Name $.Name}}
+			{{.Name | toLower}}: {{.Type | testValue}},
+			{{end}}
+			{{end}}
+			wantErr: true,
+		},
+		{{end}}
+		{{end}}
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testScenarioName, func(t *testing.T) {
+			// Setup
+			teardown := setupTestFor{{.EntityName}}(t)
+			defer teardown()
+
+			entity := &{{.EntityName}}{
+				{{range .Fields}}
+				{{.Name}}: tt.{{.Name | toLower}},
+				{{end}}
+			}
+
+			err := entity.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test{{.EntityName}}_Validate tests the Validate method
+func Test{{.EntityName}}_Validate(t *testing.T) {
+	t.Run("valid entity", func(t *testing.T) {
+		// Setup
+		teardown := setupTestFor{{.EntityName}}(t)
+		defer teardown()
+
+		entity := &{{.EntityName}}{
+			{{range .Fields}}
+			{{.Name}}: {{.Type | testValue}},
+			{{end}}
+		}
+
+		err := entity.Validate()
+		require.NoError(t, err)
+	})
+
+	{{range .Fields}}
+	{{if .Required}}
+	t.Run("invalid - missing {{.Name}}", func(t *testing.T) {
+		// Setup
+		teardown := setupTestFor{{.EntityName}}(t)
+		defer teardown()
+
+		entity := &{{.EntityName}}{
+			{{range $.Fields}}
+			{{if ne .Name $.Name}}
+			{{.Name}}: {{.Type | testValue}},
+			{{end}}
+			{{end}}
+		}
+
+		err := entity.Validate()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "{{.Name}}")
+	})
+	{{end}}
+	{{end}}
+}
+
+// Benchmark{{.EntityName}}_Validate benchmarks the Validate method
+func Benchmark{{.EntityName}}_Validate(b *testing.B) {
+	entity := &{{.EntityName}}{
+		{{range .Fields}}
+		{{.Name}}: {{.Type | testValue}},
+		{{end}}
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = entity.Validate()
+	}
+}
+
+// setupTestFor{{.EntityName}} provides common test setup
+func setupTestFor{{.EntityName}}(t *testing.T) func() {
+	// Setup code here
+	return func() {
+		// Teardown code here
+	}
+}

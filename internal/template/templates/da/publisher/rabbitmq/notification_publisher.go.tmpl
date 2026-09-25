@@ -1,0 +1,54 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/reactive-commons-go/pkg/async"
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+)
+
+// {{.PublisherName}}Payload is the JSON shape broadcast as the "{{.Target}}" notification.
+type {{.PublisherName}}Payload struct {
+	ID string `json:"id"`
+}
+
+// {{.PublisherName}}Publisher broadcasts the "{{.Target}}" notification using
+// reactive-commons-go. Notifications use auto-delete queues so subscribers must
+// be online when the notification is sent.
+type {{.PublisherName}}Publisher struct {
+	app    *rabbit.Application
+	logger *zap.Logger
+}
+
+// New{{.PublisherName}}Publisher is the fx constructor for {{.PublisherName}}Publisher.
+func New{{.PublisherName}}Publisher(app *rabbit.Application, logger *zap.Logger) *{{.PublisherName}}Publisher {
+	return &{{.PublisherName}}Publisher{
+		app:    app,
+		logger: logger,
+	}
+}
+
+// Notify broadcasts the notification to all currently-connected subscribers.
+func (p *{{.PublisherName}}Publisher) Notify(ctx context.Context, payload {{.PublisherName}}Payload) error {
+	n := async.Notification[{{.PublisherName}}Payload]{
+		Name:    "{{.Target}}",
+		EventID: uuid.NewString(),
+		Data:    payload,
+	}
+
+	p.logger.Info("emitting notification",
+		zap.String("event", n.Name),
+		zap.String("event_id", n.EventID),
+	)
+
+	if err := p.app.EventBus().EmitNotification(ctx, n); err != nil {
+		p.logger.Error("failed to emit notification",
+			zap.String("event", n.Name),
+			zap.Error(err),
+		)
+		return err
+	}
+	return nil
+}

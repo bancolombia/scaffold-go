@@ -1,0 +1,62 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/reactive-commons-go/pkg/async"
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// {{.ConsumerName}}Request is the JSON request shape for the "{{.Queue}}" query.
+type {{.ConsumerName}}Request struct {
+	ID string `json:"id"`
+}
+
+// {{.ConsumerName}}Response is the JSON response shape for the "{{.Queue}}" query.
+type {{.ConsumerName}}Response struct {
+	ID string `json:"id"`
+}
+
+// {{.ConsumerName}}Consumer serves the "{{.Queue}}" async query using
+// reactive-commons-go and dispatches each request to its use cases.
+type {{.ConsumerName}}Consumer struct {
+{{- range .UseCases}}
+	{{.Name}} {{.Type}}
+{{- end}}
+	logger *zap.Logger
+}
+
+// New{{.ConsumerName}}Consumer is the fx constructor for {{.ConsumerName}}Consumer.
+func New{{.ConsumerName}}Consumer({{range $i, $uc := .UseCases}}{{if $i}}, {{end}}{{$uc.Name}} {{$uc.Type}}{{end}}{{if .UseCases}}, {{end}}logger *zap.Logger) *{{.ConsumerName}}Consumer {
+	return &{{.ConsumerName}}Consumer{
+{{- range .UseCases}}
+		{{.Name}}: {{.Name}},
+{{- end}}
+		logger: logger,
+	}
+}
+
+// Handle is invoked by reactive-commons-go for every async query and must
+// return the response body that will be shipped back to the requester.
+func (c *{{.ConsumerName}}Consumer) Handle(ctx context.Context, q async.AsyncQuery[{{.ConsumerName}}Request], from async.From) ({{.ConsumerName}}Response, error) {
+	c.logger.Info("received async query",
+		zap.String("resource", q.Resource),
+	)
+
+	// TODO: build the response by invoking the appropriate use case(s).
+
+	return {{.ConsumerName}}Response{ID: q.QueryData.ID}, nil
+}
+
+// Register{{.ConsumerName}} attaches the consumer to the rabbit application
+// during fx OnStart, before the application begins consuming queries.
+func Register{{.ConsumerName}}(lc fx.Lifecycle, app *rabbit.Application, c *{{.ConsumerName}}Consumer, logger *zap.Logger) {
+	lc.Append(fx.Hook{
+		OnStart: func(_ context.Context) error {
+			logger.Info("registering rabbitmq query handler", zap.String("resource", "{{.Queue}}"))
+			return app.Registry().ServeQuery("{{.Queue}}", c.Handle)
+		},
+	})
+}

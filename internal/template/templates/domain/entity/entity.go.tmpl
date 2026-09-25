@@ -1,0 +1,51 @@
+package domain
+
+import (
+{{- if .HasTimeFields}}
+	"time"
+{{- end}}
+)
+
+// {{.EntityName}} represents {{.EntityName | toLower}} entity
+type {{.EntityName}} struct {
+{{- range .Fields}}
+	{{.Name}} {{.Type}}{{if .Tags}} `{{.Tags}}`{{end}}
+{{- end}}
+}
+
+// New{{.EntityName}} creates a new {{.EntityName}} instance
+func New{{.EntityName}}({{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name | toCamelCase}} {{$f.Type}}{{end}}) (*{{.EntityName}}, error) {
+	entity := &{{.EntityName}}{
+{{- range .Fields}}
+		{{.Name}}: {{.Name | toCamelCase}},
+{{- end}}
+	}
+	
+	if err := entity.Validate(); err != nil {
+		return nil, err
+	}
+	
+	return entity, nil
+}
+
+// Validate validates {{.EntityName}} fields
+func (e *{{.EntityName}}) Validate() error {
+{{- range .Fields}}
+{{- if .Required}}
+{{- if eq .Type "string"}}
+	if e.{{.Name}} == "" {
+		return errors.New("{{.Name}} is required")
+	}
+{{- else if eq .Type "int"}}
+	if e.{{.Name}} == 0 {
+		return errors.New("{{.Name}} is required")
+	}
+{{- else if eq .Type "int64"}}
+	if e.{{.Name}} == 0 {
+		return errors.New("{{.Name}} is required")
+	}
+{{- end}}
+{{- end}}
+{{- end}}
+	return nil
+}

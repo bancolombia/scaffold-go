@@ -1,0 +1,59 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/reactive-commons-go/pkg/async"
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// {{.ConsumerName}}Payload is the JSON shape received for "{{.Queue}}" commands.
+// Replace the placeholder field with your real command schema.
+type {{.ConsumerName}}Payload struct {
+	ID string `json:"id"`
+}
+
+// {{.ConsumerName}}Consumer listens to the "{{.Queue}}" command using
+// reactive-commons-go and dispatches each message to its use cases.
+type {{.ConsumerName}}Consumer struct {
+{{- range .UseCases}}
+	{{.Name}} {{.Type}}
+{{- end}}
+	logger *zap.Logger
+}
+
+// New{{.ConsumerName}}Consumer is the fx constructor for {{.ConsumerName}}Consumer.
+func New{{.ConsumerName}}Consumer({{range $i, $uc := .UseCases}}{{if $i}}, {{end}}{{$uc.Name}} {{$uc.Type}}{{end}}{{if .UseCases}}, {{end}}logger *zap.Logger) *{{.ConsumerName}}Consumer {
+	return &{{.ConsumerName}}Consumer{
+{{- range .UseCases}}
+		{{.Name}}: {{.Name}},
+{{- end}}
+		logger: logger,
+	}
+}
+
+// Handle is invoked by reactive-commons-go for every received command.
+// Returning a non-nil error nacks the message so the broker can redeliver it.
+func (c *{{.ConsumerName}}Consumer) Handle(ctx context.Context, cmd async.Command[{{.ConsumerName}}Payload]) error {
+	c.logger.Info("received command",
+		zap.String("command", cmd.Name),
+		zap.String("command_id", cmd.CommandID),
+	)
+
+	// TODO: invoke the appropriate use case(s) using c.<usecase>.Execute(ctx, ...)
+
+	return nil
+}
+
+// Register{{.ConsumerName}} attaches the consumer to the rabbit application
+// during fx OnStart, before the application begins consuming messages.
+func Register{{.ConsumerName}}(lc fx.Lifecycle, app *rabbit.Application, c *{{.ConsumerName}}Consumer, logger *zap.Logger) {
+	lc.Append(fx.Hook{
+		OnStart: func(_ context.Context) error {
+			logger.Info("registering rabbitmq command listener", zap.String("command", "{{.Queue}}"))
+			return app.Registry().ListenCommand("{{.Queue}}", c.Handle)
+		},
+	})
+}

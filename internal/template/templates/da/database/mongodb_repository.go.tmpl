@@ -1,0 +1,122 @@
+package database
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
+{{- if .ModulePath}}
+
+	"{{.ModulePath}}/internal/domain"
+{{- end}}
+)
+
+// minimal interface for MongoDB operations used by {{.EntityName}}Repository.
+// This interface abstracts the collection operations required by the {{.EntityName}}Repository.
+// It allows for easier testing and decouples the repository from the concrete *mongo.Collection.
+// ADD ADITIONAL METHODS AS NEEDED
+type I{{.EntityName}}MongoGateway interface {
+	InsertOne(ctx context.Context, document interface{}, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error)
+	FindOne(ctx context.Context, filter interface{}, opts ...*options.FindOneOptions) *mongo.SingleResult
+	UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error)
+	DeleteOne(ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error)
+	Find(ctx context.Context, filter interface{}, opts ...*options.FindOptions) (*mongo.Cursor, error)
+}
+
+type {{.EntityName}}Repository struct {
+	collection I{{.EntityName}}MongoGateway
+	logger     *zap.Logger
+}
+
+func New{{.EntityName}}Repository(mongoAdapter *MongoDBAdapter, logger *zap.Logger) *{{.EntityName}}Repository {
+	return &{{.EntityName}}Repository{
+		collection: mongoAdapter.database.Collection("{{.EntityName | toTableName}}"),
+		logger:     logger,
+	}
+}
+
+func (r *{{.EntityName}}Repository) Create(ctx context.Context, entity *domain.{{.EntityName}}) error {
+	r.logger.Info("Creating entity", zap.String("collection", "{{.EntityName | toTableName}}"))
+
+	_, err := r.collection.InsertOne(ctx, entity)
+	if err != nil {
+		r.logger.Error("Failed to create entity", zap.Error(err))
+		return fmt.Errorf("failed to create entity: %w", err)
+	}
+
+	return nil
+}
+
+func (r *{{.EntityName}}Repository) GetByID(ctx context.Context, id string) (*domain.{{.EntityName}}, error) {
+	r.logger.Info("Getting entity by ID", zap.String("id", id))
+
+	var entity domain.{{.EntityName}}
+	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		r.logger.Error("Failed to get entity", zap.Error(err))
+		return nil, fmt.Errorf("failed to get entity: %w", err)
+	}
+
+	return &entity, nil
+}
+
+func (r *{{.EntityName}}Repository) Update(ctx context.Context, entity *domain.{{.EntityName}}) error {
+	r.logger.Info("Updating entity", zap.String("collection", "{{.EntityName | toTableName}}"))
+
+	// TODO: Replace `entity.ID` with the actual identifier field used by domain.{{.EntityName}}
+	_, err := r.collection.UpdateOne(ctx, bson.M{"_id": entity.ID}, bson.M{"$set": entity})
+	if err != nil {
+		r.logger.Error("Failed to update entity", zap.Error(err))
+		return fmt.Errorf("failed to update entity: %w", err)
+	}
+
+	return nil
+}
+
+func (r *{{.EntityName}}Repository) Delete(ctx context.Context, id string) error {
+	r.logger.Info("Deleting entity", zap.String("id", id))
+
+	_, err := r.collection.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		r.logger.Error("Failed to delete entity", zap.Error(err))
+		return fmt.Errorf("failed to delete entity: %w", err)
+	}
+
+	return nil
+}
+
+func (r *{{.EntityName}}Repository) List(ctx context.Context, limit, offset int) ([]*domain.{{.EntityName}}, error) {
+	r.logger.Info("Listing entities", zap.String("collection", "{{.EntityName | toTableName}}"))
+
+	opts := options.Find().SetLimit(int64(limit)).SetSkip(int64(offset))
+	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		r.logger.Error("Failed to list entities", zap.Error(err))
+		return nil, fmt.Errorf("failed to list entities: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	entities := make([]*domain.{{.EntityName}}, 0)
+	for cursor.Next(ctx) {
+		var entity domain.{{.EntityName}}
+		if err := cursor.Decode(&entity); err != nil {
+			r.logger.Error("Failed to decode entity", zap.Error(err))
+			continue
+		}
+		entities = append(entities, &entity)
+	}
+
+	if err := cursor.Err(); err != nil {
+		r.logger.Error("Cursor error while listing entities", zap.Error(err))
+		return nil, fmt.Errorf("cursor error: %w", err)
+	}
+
+	return entities, nil
+}

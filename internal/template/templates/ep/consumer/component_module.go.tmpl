@@ -1,0 +1,11 @@
+package {{.PackageName}}
+
+import "go.uber.org/fx"
+
+// {{.ConsumerName}}Module wires the {{.ConsumerName}}Consumer into the fx graph.
+// One module file is generated per consumer so that re-running the generator
+// for a different consumer does not overwrite the previous one.
+var {{.ConsumerName}}Module = fx.Options(
+	fx.Provide(New{{.ConsumerName}}Consumer),
+	fx.Invoke(Register{{.ConsumerName}}),
+)

@@ -1,0 +1,54 @@
+package {{.PackageName}}
+
+import (
+	"context"
+
+	"github.com/bancolombia/reactive-commons-go/pkg/async"
+	"github.com/bancolombia/reactive-commons-go/rabbit"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+)
+
+// {{.PublisherName}}Payload is the JSON shape emitted as the "{{.Target}}" domain event.
+// Replace the placeholder field with your real event schema.
+type {{.PublisherName}}Payload struct {
+	ID string `json:"id"`
+}
+
+// {{.PublisherName}}Publisher emits the "{{.Target}}" domain event using
+// reactive-commons-go.
+type {{.PublisherName}}Publisher struct {
+	app    *rabbit.Application
+	logger *zap.Logger
+}
+
+// New{{.PublisherName}}Publisher is the fx constructor for {{.PublisherName}}Publisher.
+func New{{.PublisherName}}Publisher(app *rabbit.Application, logger *zap.Logger) *{{.PublisherName}}Publisher {
+	return &{{.PublisherName}}Publisher{
+		app:    app,
+		logger: logger,
+	}
+}
+
+// Publish emits a "{{.Target}}" domain event with a fresh event ID.
+func (p *{{.PublisherName}}Publisher) Publish(ctx context.Context, payload {{.PublisherName}}Payload) error {
+	event := async.DomainEvent[{{.PublisherName}}Payload]{
+		Name:    "{{.Target}}",
+		EventID: uuid.NewString(),
+		Data:    payload,
+	}
+
+	p.logger.Info("emitting domain event",
+		zap.String("event", event.Name),
+		zap.String("event_id", event.EventID),
+	)
+
+	if err := p.app.EventBus().Emit(ctx, event); err != nil {
+		p.logger.Error("failed to emit domain event",
+			zap.String("event", event.Name),
+			zap.Error(err),
+		)
+		return err
+	}
+	return nil
+}
