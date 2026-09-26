@@ -189,6 +189,12 @@ func TestInitCommand_Success(t *testing.T) {
 		t.Error("README.md file was not created")
 	}
 
+	// Verify Makefile was created
+	makefilePath := filepath.Join(projectDir, "Makefile")
+	if _, err := os.Stat(makefilePath); os.IsNotExist(err) {
+		t.Error("Makefile was not created")
+	}
+
 	// Verify domain directory was created
 	domainDir := filepath.Join(projectDir, "internal", "domain")
 	if _, err := os.Stat(domainDir); os.IsNotExist(err) {

@@ -337,6 +337,7 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		expectedFiles := []string{
 			"go.mod",
 			"README.md",
+			"Makefile",
 			"cmd/main.go",
 			"config/config.go",
 			"config/config.yaml",

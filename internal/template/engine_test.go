@@ -389,6 +389,7 @@ func TestTemplateEngine_LoadsAllTemplates(t *testing.T) {
 		"project/config.go.tmpl",
 		"project/config.yaml.tmpl",
 		"project/README.md.tmpl",
+		"project/Makefile.tmpl",
 	}
 
 	for _, tmplName := range requiredTemplates {
