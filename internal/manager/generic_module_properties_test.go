@@ -367,13 +367,13 @@ func createModuleFileWithProviders(projectDir string, providerNames []string) er
 
 	// Build provider list
 	var providers strings.Builder
-	for i, name := range providerNames {
+	for _, name := range providerNames {
 		providers.WriteString("\t\tNew")
 		providers.WriteString(name)
 		providers.WriteString("UseCase,\n")
-		if i < len(providerNames)-1 {
-			// Add extra line for formatting (optional)
-		}
+		// if i < len(providerNames)-1 {
+		// Add extra line for formatting (optional)
+		// }
 	}
 
 	content := `package usecase

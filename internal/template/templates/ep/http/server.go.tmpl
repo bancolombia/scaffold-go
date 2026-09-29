@@ -10,7 +10,7 @@ import (
     "{{.ModulePath}}/internal/entrypoints/http/routes"
 	"{{.ModulePath}}/internal/entrypoints/http/middleware"
     {{- end}}
-	
+
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -28,7 +28,7 @@ func NewFiberApp(cfg *config.Config) *fiber.App {
 	{{- if .EnableCORS}}
 	app.Use(middleware.CorsMiddleware())
 	{{- end}}
-	
+
 	//if cfg.App.SwaggerEnabled {
 	//	app.Get("/swagger/*", middleware.SwaggerMiddleware())
 	//}

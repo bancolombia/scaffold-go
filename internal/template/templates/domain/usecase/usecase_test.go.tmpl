@@ -172,7 +172,7 @@ func Test{{.UseCaseName}}_Execute_ContextCancellation(t *testing.T) {
 	logger := zap.NewNop()
 	uc := New{{.UseCaseName}}UseCase(
 		{{range .Dependencies}}
-		mock{{.Type}}, 
+		mock{{.Type}},
 		{{end}}
 		logger,
 	)
@@ -203,7 +203,7 @@ func Benchmark{{.UseCaseName}}_Execute(b *testing.B) {
 	logger := zap.NewNop()
 	uc := New{{.UseCaseName}}UseCase(
 		{{range .Dependencies}}
-		mock{{.Type}}, 
+		mock{{.Type}},
 		{{end}}
 		logger,
 	)

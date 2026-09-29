@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	
+
 {{if .ModulePath}}
 	"{{.ModulePath}}/internal/domain"
 {{end}}
@@ -153,14 +153,14 @@ func Test{{.EntityName}}Repository_Update(t *testing.T) {
 	}{
 		{
 			name:    "successful update",
-			entity:  &domain.{{.EntityName}}{ 
+			entity:  &domain.{{.EntityName}}{
 				// TODO: Initialize entity fields
 			},
 			wantErr: false,
 		},
 		{
 			name:    "update with error",
-			entity:  &domain.{{.EntityName}}{ 
+			entity:  &domain.{{.EntityName}}{
 				// TODO: Initialize entity fields
 			},
 			execErr: errors.New("database error"),
@@ -179,7 +179,7 @@ func Test{{.EntityName}}Repository_Update(t *testing.T) {
 			// TODO: Ensure the order of arguments matches the SQL query placeholders
 			// And set correct ID argument at the end
 			exp := mock.ExpectExec(expectedQuery).
-				WithArgs({{range $i, $f := .Fields}}{{if $i}}, {{end}}tt.entity.{{$f.Name}}{{end}}, tt.entity.ID) 
+				WithArgs({{range $i, $f := .Fields}}{{if $i}}, {{end}}tt.entity.{{$f.Name}}{{end}}, tt.entity.ID)
 			if tt.execErr != nil {
 				exp.WillReturnError(tt.execErr)
 			} else {

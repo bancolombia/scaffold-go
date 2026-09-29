@@ -146,7 +146,7 @@ Field format: Name:type
 	}
 
 	cmd.Flags().StringSliceVarP(&fields, "fields", "f", []string{}, "Entity fields in format Name:type (comma-separated). Example: Name:string,Email:string,Age:int")
-	cmd.MarkFlagRequired("fields")
+	_ = cmd.MarkFlagRequired("fields")
 
 	return cmd
 }

@@ -1,0 +1,32 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - ineffassign
+    - misspell
+    - unconvert
+
+  exclusions:
+    warn-unused: false
+    generated: strict
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - errcheck
+          - typecheck
+
+    paths:
+      - internal/generator/templates
+
+formatters:
+  enable:
+#     - gofmt
+    - goimports

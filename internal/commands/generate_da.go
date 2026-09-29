@@ -170,8 +170,8 @@ Field format: Name:type
 	cmd.Flags().StringVarP(&dbType, "type", "t", "postgres", "Database type: postgres, mongodb, or dynamodb")
 	cmd.Flags().StringVarP(&entityName, "entity", "e", "", "Entity name that this adapter implements the repository for (required)")
 	cmd.Flags().StringSliceVarP(&fields, "fields", "f", []string{}, "Entity fields in format Name:type (comma-separated, required). Example: Name:string,Email:string,Age:int")
-	cmd.MarkFlagRequired("entity")
-	cmd.MarkFlagRequired("fields")
+	_ = cmd.MarkFlagRequired("entity")
+	_ = cmd.MarkFlagRequired("fields")
 
 	return cmd
 }

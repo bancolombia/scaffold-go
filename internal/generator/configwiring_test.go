@@ -106,7 +106,7 @@ func TestEnsureConfigBlock_MultipleKeysAppendSequentially(t *testing.T) {
 	if mIdx < 0 || dIdx < 0 {
 		t.Fatalf("both blocks should be present:\n%s", body)
 	}
-	if !(mIdx < dIdx) {
+	if mIdx >= dIdx {
 		t.Fatalf("mongodb block should come before dynamodb block:\n%s", body)
 	}
 }

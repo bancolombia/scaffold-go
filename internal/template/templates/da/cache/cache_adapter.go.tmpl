@@ -61,8 +61,8 @@ func (c *{{.CacheName}}Cache) Set(ctx context.Context, key string, value interfa
 	//     return err
 	// }
 
-	c.logger.Debug("Cache set successfully", 
-		zap.String("key", key), 
+	c.logger.Debug("Cache set successfully",
+		zap.String("key", key),
 		zap.Duration("ttl", c.ttl))
 	return nil
 }
