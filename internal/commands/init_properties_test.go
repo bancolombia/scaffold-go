@@ -454,7 +454,6 @@ func TestProperty_ProjectInitializationCreatesYAMLConfigFile(t *testing.T) {
 				"server:",
 				"host:",
 				"port:",
-				"database:",
 				"logging:",
 				"level:",
 			}
@@ -673,20 +672,6 @@ func TestProperty_CodeGenerationUsesTextTemplate(t *testing.T) {
 			// Verify module path is substituted in imports
 			if !strings.Contains(string(mainGoContent), modulePath+"/config") {
 				t.Logf("main.go does not contain correctly substituted module path")
-				return false
-			}
-
-			// Check that project name is correctly substituted in config.yaml
-			configYamlPath := filepath.Join(projectDir, "config", "config.yaml")
-			configYamlContent, err := os.ReadFile(configYamlPath)
-			if err != nil {
-				t.Logf("failed to read config.yaml: %v", err)
-				return false
-			}
-
-			// Verify project name is substituted in database name
-			if !strings.Contains(string(configYamlContent), "database: "+projectName) {
-				t.Logf("config.yaml does not contain correctly substituted project name")
 				return false
 			}
 

@@ -2,11 +2,13 @@ package commands
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/gabheadz/scaffold-go/internal/filesystem"
 	"github.com/gabheadz/scaffold-go/internal/generator"
 	"github.com/gabheadz/scaffold-go/internal/template"
+	"github.com/gabheadz/scaffold-go/internal/validator"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -146,6 +148,15 @@ Field format: Name:type
 			}
 
 			logger := GetLogger()
+
+			projectName := resolveProjectName(validator, projectDir)
+			if warn, err := generator.EnsureConfigBlockForDatabase(projectDir, dbType, projectName, tmpl); err != nil {
+				return WrapFileSystemError("config-wiring", "config/config.yaml", err)
+			} else if warn != nil {
+				logger.Warn(warn.Error())
+				fmt.Printf("⚠ %s\n", warn.Error())
+			}
+
 			logger.Info("Database adapter generated successfully", zap.String("entity", entityName), zap.String("type", dbType))
 			fmt.Printf("✓ Database adapter for '%s' generated (%s)\n", entityName, dbType)
 			for _, f := range files {
@@ -489,4 +500,19 @@ The generated cache adapter provides caching functionality for the application.`
 	}
 
 	return cmd
+}
+
+// resolveProjectName returns the last segment of the module path declared in
+// go.mod (e.g. "github.com/acme/orders" → "orders"). Falls back to the
+// project directory's basename when go.mod cannot be read.
+func resolveProjectName(v *validator.Validator, projectDir string) string {
+	modulePath, err := v.GetModulePath(projectDir)
+	if err == nil && modulePath != "" {
+		return filepath.Base(modulePath)
+	}
+	abs, err := filepath.Abs(projectDir)
+	if err != nil {
+		return "app"
+	}
+	return filepath.Base(abs)
 }

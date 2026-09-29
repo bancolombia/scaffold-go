@@ -101,7 +101,7 @@ func TestProperty_GeneratedConfigIncludesStandardSettings(t *testing.T) {
 	parameters.MinSuccessfulTests = 10
 	properties := gopter.NewProperties(parameters)
 
-	properties.Property("generated config includes database connection, server port, and logging level settings", prop.ForAll(
+	properties.Property("generated config includes server port, and logging level settings", prop.ForAll(
 		func(projectName string, modulePath string) bool {
 			// Create temporary directory
 			tmpDir := t.TempDir()
@@ -146,20 +146,6 @@ func TestProperty_GeneratedConfigIncludesStandardSettings(t *testing.T) {
 				return false
 			}
 
-			// Verify DatabaseConfig has connection-related fields
-			databaseFields := []string{"Host", "Port", "Database", "User", "Password"}
-			foundDatabaseField := false
-			for _, field := range databaseFields {
-				if strings.Contains(configGoContent, field) {
-					foundDatabaseField = true
-					break
-				}
-			}
-			if !foundDatabaseField {
-				t.Logf("DatabaseConfig does not contain connection fields")
-				return false
-			}
-
 			// Verify LoggingConfig has Level field
 			if !strings.Contains(configGoContent, "Level") {
 				t.Logf("LoggingConfig does not contain Level field")
@@ -180,7 +166,6 @@ func TestProperty_GeneratedConfigIncludesStandardSettings(t *testing.T) {
 			requiredSettings := []string{
 				"server:",
 				"port:",
-				"database:",
 				"logging:",
 				"level:",
 			}
@@ -234,10 +219,9 @@ func TestProperty_GeneratedConfigIncludesDefaultValues(t *testing.T) {
 
 			// Verify default values are present
 			defaultValues := map[string]string{
-				"port":      "8080",
-				"host":      "localhost",
-				"level":     "info",
-				"database:": projectName, // Database name should default to project name
+				"port":  "8080",
+				"host":  "localhost",
+				"level": "info",
 			}
 
 			for key, value := range defaultValues {

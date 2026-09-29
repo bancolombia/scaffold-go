@@ -1,0 +1,6 @@
+database:
+  host: localhost
+  port: 5432
+  user: # set here explicitly or define it in the APP_POSTGRES_USER environment variable; takes precedence over environment variable if set
+  password: # set here explicitly or define it in the APP_POSTGRES_PASSWORD environment variable; takes precedence over environment variable if set
+  database: {{.Name}}

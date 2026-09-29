@@ -3,6 +3,7 @@ package commands
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -187,6 +188,80 @@ func TestGenerateDaDatabaseCommand_Success(t *testing.T) {
 	modulePath := filepath.Join(dbDir, "module.go")
 	if _, err := os.Stat(modulePath); os.IsNotExist(err) {
 		t.Error("module.go file was not created")
+	}
+}
+
+func TestGenerateDaDatabaseCommand_MongoDBInjectsConfigBlock(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module test/project\n\ngo 1.21\n"), 0644); err != nil {
+		t.Fatalf("failed to create go.mod: %v", err)
+	}
+
+	cfgDir := filepath.Join(tmpDir, "config")
+	if err := os.MkdirAll(cfgDir, 0755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+	initialCfg := "server:\n  host: localhost\n  port: 8080\n"
+	if err := os.WriteFile(filepath.Join(cfgDir, "config.yaml"), []byte(initialCfg), 0644); err != nil {
+		t.Fatalf("failed to seed config.yaml: %v", err)
+	}
+
+	dbDir := filepath.Join(tmpDir, "internal", "drivenadapters", "database")
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		t.Fatalf("failed to create database directory: %v", err)
+	}
+	domainDir := filepath.Join(tmpDir, "internal", "domain")
+	if err := os.MkdirAll(domainDir, 0755); err != nil {
+		t.Fatalf("failed to create domain directory: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(domainDir, "product.go"), []byte("package domain\n"), 0644); err != nil {
+		t.Fatalf("failed to seed entity file: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(domainDir, "product_repository.go"), []byte("package domain\n"), 0644); err != nil {
+		t.Fatalf("failed to seed repository file: %v", err)
+	}
+
+	oldDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get current directory: %v", err)
+	}
+	defer os.Chdir(oldDir)
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("failed to change directory: %v", err)
+	}
+
+	runCmd := func() {
+		cmd := NewGenerateDaDatabaseCommand()
+		cmd.SetArgs([]string{"--entity", "Product", "--type", "mongodb", "--fields", "Name:string,Price:float64"})
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
+
+	runCmd()
+
+	cfgBytes, err := os.ReadFile(filepath.Join(cfgDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("failed to read config.yaml: %v", err)
+	}
+	body := string(cfgBytes)
+	if !contains(body, "mongodb:") {
+		t.Fatalf("expected mongodb block in config.yaml, got:\n%s", body)
+	}
+	if !contains(body, "uri: mongodb://%s:%s@localhost:27017") {
+		t.Fatalf("expected mongodb uri default, got:\n%s", body)
+	}
+
+	// Re-run and assert idempotency (still exactly one mongodb block).
+	runCmd()
+
+	cfgBytes2, err := os.ReadFile(filepath.Join(cfgDir, "config.yaml"))
+	if err != nil {
+		t.Fatalf("failed to re-read config.yaml: %v", err)
+	}
+	if count := strings.Count(string(cfgBytes2), "\nmongodb:"); count != 1 {
+		t.Fatalf("expected exactly one top-level mongodb block after re-run, got %d:\n%s", count, cfgBytes2)
 	}
 }
 

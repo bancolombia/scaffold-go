@@ -390,6 +390,9 @@ func TestTemplateEngine_LoadsAllTemplates(t *testing.T) {
 		"project/config.yaml.tmpl",
 		"project/README.md.tmpl",
 		"project/Makefile.tmpl",
+		"config/mongodb.yaml.tmpl",
+		"config/dynamodb.yaml.tmpl",
+		"config/postgres.yaml.tmpl",
 	}
 
 	for _, tmplName := range requiredTemplates {
