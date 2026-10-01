@@ -75,14 +75,14 @@ jobs:
       - name: Unit tests with coverage
         run: |
           mkdir -p coverage.covdata/unit
-          PKG_LIST=$(go list ./... | grep -v '/examples/')
+          PKG_LIST=$(go list ./... | grep -v '/tests/')
           PKGS=$(echo "$PKG_LIST" | paste -sd, -)
           go test -race -covermode=atomic -coverpkg=$PKGS $PKG_LIST -args -test.gocoverdir=$PWD/coverage.covdata/unit
 
       - name: Integration tests with coverage
         run: |
           mkdir -p coverage.covdata/integration
-          PKGS=$(go list ./... | grep -v '/examples/' | paste -sd, -)
+          PKGS=$(go list ./... | grep -v '/tests/' | paste -sd, -)
           go test -race -tags integration -covermode=atomic -coverpkg=$PKGS ./tests/integration/... -timeout 180s -args -test.gocoverdir=$PWD/coverage.covdata/integration
 
       - name: Merge coverage profiles
