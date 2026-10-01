@@ -1,0 +1,114 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+      - feature/*
+      - fix/*
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate a token
+        id: generate_token
+        if: github.ref == 'refs/heads/master'
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2
+        with:
+          app_id: ${{ secrets.APP_ID_ADMIN_GITHUB }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY_ADMIN_GITHUB }}
+      - uses: actions/checkout@v4
+        if: github.ref == 'refs/heads/master'
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        if: github.ref != 'refs/heads/master'
+
+      - name: Verify Conventional Commits
+        uses: amannn/action-semantic-pull-request@e32d7e603df1aa1ba07e981f2a23455dee596825 # v5
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up NodeJS
+        if: github.ref == 'refs/heads/master'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Set up Semantic Release
+        if: github.ref == 'refs/heads/master'
+        run: npm -g install --ignore-scripts @semantic-release/git semantic-release@23.0.0
+
+      - name: Semantic Release
+        if: github.ref == 'refs/heads/master'
+        run: npx semantic-release@23.0.0
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+      - name: Setup Go 1.26.x
+        uses: actions/setup-go@v5
+        with:
+          # Semantic version range syntax or exact version of Go
+          go-version: '1.26.x'
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Go Vet
+        run: |
+          go vet ./...
+
+      - name: Unit tests with coverage
+        run: |
+          mkdir -p coverage.covdata/unit
+          PKG_LIST=$(go list ./... | grep -v '/examples/')
+          PKGS=$(echo "$PKG_LIST" | paste -sd, -)
+          go test -race -covermode=atomic -coverpkg=$PKGS $PKG_LIST -args -test.gocoverdir=$PWD/coverage.covdata/unit
+
+      - name: Integration tests with coverage
+        run: |
+          mkdir -p coverage.covdata/integration
+          PKGS=$(go list ./... | grep -v '/examples/' | paste -sd, -)
+          go test -race -tags integration -covermode=atomic -coverpkg=$PKGS ./tests/integration/... -timeout 180s -args -test.gocoverdir=$PWD/coverage.covdata/integration
+
+      - name: Merge coverage profiles
+        run: |
+          go tool covdata textfmt -i=coverage.covdata/unit,coverage.covdata/integration -o=coverage.out
+
+#      - name: Upload coverage to Codecov
+#        uses: codecov/codecov-action@v5
+#        with:
+#          # token: ${{ secrets.CODECOV_TOKEN }}
+#          files: ./coverage.out
+
+      - name: Analyze with SonarQube
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          # Project metadata can be defined here or in a sonar-project.properties file
+          args: >
+            -Dsonar.projectKey=bancolombia_scaffold-go
+            -Dsonar.organization=grupo-bancolombia
+            -Dsonar.sources=.
+            -Dsonar.coverage.exclusions=**/*_test.go,**/examples/**
+            -Dsonar.exclusions=**/*_test.go,**/examples/**
+            -Dsonar.tests=.
+            -Dsonar.test.inclusions=**/*_test.go
+            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.branch.name=${{ github.ref_name }}
