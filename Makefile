@@ -1,4 +1,4 @@
-.PHONY: build test test-unit test-integration test-properties test-fast clean install run help
+.PHONY: build test test-unit test-integration test-properties test-fast clean install run help docs-start docs-build
 
 # Version information
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -6,9 +6,9 @@ BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # Build flags
-LDFLAGS := -X github.com/gabheadz/scaffold-go/internal/commands.Version=$(VERSION) \
-           -X github.com/gabheadz/scaffold-go/internal/commands.BuildDate=$(BUILD_DATE) \
-           -X github.com/gabheadz/scaffold-go/internal/commands.GitCommit=$(GIT_COMMIT)
+LDFLAGS := -X github.com/bancolombia/scaffold-go/internal/commands.Version=$(VERSION) \
+           -X github.com/bancolombia/scaffold-go/internal/commands.BuildDate=$(BUILD_DATE) \
+           -X github.com/bancolombia/scaffold-go/internal/commands.GitCommit=$(GIT_COMMIT)
 
 # Build the binary
 build:
@@ -82,6 +82,16 @@ fmt:
 	@go fmt ./...
 	@echo "✅ Code formatted"
 
+# Preview Docusaurus docs (requires Node.js 18+)
+docs-start:
+	@npm --prefix docs install
+	@npm --prefix docs start
+
+# Production Docusaurus build into website/build
+docs-build:
+	@npm --prefix docs install
+	@npm --prefix docs run build
+
 # Show help
 help:
 	@echo "Available targets:"
@@ -97,6 +107,8 @@ help:
 	@echo "  run              - Run the CLI"
 	@echo "  tidy             - Tidy dependencies"
 	@echo "  fmt              - Format code"
+	@echo "  docs-start       - Preview documentation site (Docusaurus)"
+	@echo "  docs-build       - Build documentation site"
 	@echo "  help             - Show this help"
 
 # Default target
