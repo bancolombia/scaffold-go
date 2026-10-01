@@ -5,16 +5,17 @@ description: Run Docusaurus locally and deploy this site to GitHub Pages.
 
 # Publishing docs
 
-User-facing Markdown lives in the repository **`docs/`** folder. The
-**`website/`** folder is a Docusaurus 3 app that points `docs.path` at
-`../docs` so the Go module stays free of Node tooling at the root.
+User-facing Markdown lives in the repository **`docs/docs`** folder. 
+The root of the **`docs/`** folder is a Docusaurus 3 app that points
+`docs.path` at `./docs` (subfolder) so the Go module stays free of 
+Node tooling at the root.
 
 ## Local development
 
 Node.js 18+.
 
 ```bash
-cd website
+cd docs
 npm install
 npm start
 ```
@@ -28,7 +29,7 @@ npm run build
 npm run serve
 ```
 
-`website/build/` is the static output (gitignored).
+`docs/build/` is the static output (gitignored).
 
 ## Configuration
 
@@ -52,8 +53,8 @@ set `baseUrl: '/'` and adjust `url`.
 4. After the `docs` workflow succeeds, wait a minute and open
    `https://bancolombia.github.io/scaffold-go/`.
 
-The workflow builds on pushes to `master` that touch `docs/**`, `website/**`,
-or the workflow file, then publishes `website/build` to `gh-pages`.
+The workflow builds on pushes to `master` that touch `docs/**`,
+or the workflow file, then publishes `docs/build` to `gh-pages`.
 
 :::note Custom domain
 Set `url` to the domain and `baseUrl` to `'/'`, then add a `CNAME` in

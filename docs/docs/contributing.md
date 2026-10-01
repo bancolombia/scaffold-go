@@ -43,10 +43,10 @@ contents (generator tests and
 
 ## Docs site
 
-Markdown is in `/docs`. Preview:
+Markdown is in `/docs/docs`. Preview:
 
 ```bash
-cd website
+cd docs
 npm install
 npm start
 ```
