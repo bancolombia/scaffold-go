@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 )
 
 // supportedPublisherPatterns enumerates valid (broker, pattern) combinations
@@ -96,30 +96,45 @@ func (g *PublisherGenerator) Generate() ([]GeneratedFile, error) {
 		Target:        target,
 	}
 
+	// Initialize the files slice to collect generated files
+	var files []GeneratedFile
+
+	// 1. Define the interface in the domain layer for the publisher.
+	domainPublisherTemplate := "domain/entity/publisher.go.tmpl"
+	domainPublisherContent, err := g.Templates.Execute(domainPublisherTemplate, data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate domain publisher interface: %w", err)
+	}
+	domainPublisherPath := filepath.Join(g.ProjectDir, "internal", "domain", strings.ToLower(g.Pattern)+"_publisher.go")
+	files = append(files, GeneratedFile{Path: domainPublisherPath, Content: domainPublisherContent})
+
+	// 2. Create the foundation module if it doesn't exist as an infrastructure module to serve both publishers and consumers.
+	if foundation, ok, err := renderFoundationModule(g.Templates, g.Broker, g.ProjectDir, modulePath); err != nil {
+		return nil, err
+	} else if ok {
+		files = append(files, foundation)
+	}
+
+	// 3. Generate the publisher implementation based on the broker and pattern.
 	publisherTemplate := fmt.Sprintf("da/publisher/%s/%s_publisher.go.tmpl", g.Broker, g.Pattern)
 	publisherContent, err := g.Templates.Execute(publisherTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate publisher: %w", err)
 	}
 
+	// Generate the component module content
 	moduleContent, err := g.Templates.Execute("da/publisher/component_module.go.tmpl", data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate component module: %w", err)
 	}
 
-	publisherPath := filepath.Join(g.ProjectDir, "internal", "drivenadapters", "messaging", strings.ToLower(g.Name)+"_publisher.go")
-	moduleFilePath := filepath.Join(g.ProjectDir, "internal", "drivenadapters", "messaging", strings.ToLower(g.Name)+"_module.go")
+	publisherPath := filepath.Join(g.ProjectDir, "internal", "drivenadapters", "messaging", g.Broker, strings.ToLower(g.Name)+"_publisher.go")
+	moduleFilePath := filepath.Join(g.ProjectDir, "internal", "drivenadapters", "messaging", g.Broker, "module.go")
 
-	files := []GeneratedFile{
-		{Path: publisherPath, Content: publisherContent},
-		{Path: moduleFilePath, Content: moduleContent},
-	}
-
-	if foundation, ok, err := renderFoundationModule(g.Templates, g.Broker, g.ProjectDir, modulePath); err != nil {
-		return nil, err
-	} else if ok {
-		files = append(files, foundation)
-	}
+	files = append(files,
+		GeneratedFile{Path: publisherPath, Content: publisherContent},
+		GeneratedFile{Path: moduleFilePath, Content: moduleContent},
+	)
 
 	return files, nil
 }
@@ -150,6 +165,7 @@ func renderFoundationModule(tmpl *template.TemplateEngine, broker, projectDir, m
 	if err != nil {
 		return GeneratedFile{}, false, fmt.Errorf("failed to generate foundation module: %w", err)
 	}
+
 	return GeneratedFile{Path: path, Content: content}, true, nil
 }
 

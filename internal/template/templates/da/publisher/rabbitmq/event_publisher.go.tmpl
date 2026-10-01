@@ -9,12 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// {{.PublisherName}}Payload is the JSON shape emitted as the "{{.Target}}" domain event.
-// Replace the placeholder field with your real event schema.
-type {{.PublisherName}}Payload struct {
-	ID string `json:"id"`
-}
-
 // {{.PublisherName}}Publisher emits the "{{.Target}}" domain event using
 // reactive-commons-go.
 type {{.PublisherName}}Publisher struct {
@@ -31,8 +25,9 @@ func New{{.PublisherName}}Publisher(app *rabbit.Application, logger *zap.Logger)
 }
 
 // Publish emits a "{{.Target}}" domain event with a fresh event ID.
-func (p *{{.PublisherName}}Publisher) Publish(ctx context.Context, payload {{.PublisherName}}Payload) error {
-	event := async.DomainEvent[{{.PublisherName}}Payload]{
+// Adjust this method signature and payload type in accordance with the I{{.Pattern | title}}Publisher interface defined in the domain layer.
+func (p *{{.PublisherName}}Publisher) Publish(ctx context.Context, payload any) error {
+	event := async.DomainEvent[any]{
 		Name:    "{{.Target}}",
 		EventID: uuid.NewString(),
 		Data:    payload,

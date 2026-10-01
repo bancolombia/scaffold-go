@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gabheadz/scaffold-go/internal/commands"
-	"github.com/gabheadz/scaffold-go/internal/domain"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/commands"
+	"github.com/bancolombia/scaffold-go/internal/domain"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"

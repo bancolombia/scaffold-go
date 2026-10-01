@@ -1,4 +1,4 @@
-module github.com/gabheadz/scaffold-go
+module github.com/bancolombia/scaffold-go
 
 go 1.25.0
 

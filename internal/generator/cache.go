@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 )
 
 type CacheGenerator struct {

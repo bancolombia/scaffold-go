@@ -247,10 +247,10 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		output, err := cmd.CombinedOutput()
 		require.NoError(t, err, "generate da publisher command failed: %s", string(output))
 
-		publisherPath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "usereventpublisher_publisher.go")
+		publisherPath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", "usereventpublisher_publisher.go")
 		assert.FileExists(t, publisherPath, "publisher file should exist")
 
-		modulePath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "usereventpublisher_module.go")
+		modulePath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", "module.go")
 		assert.FileExists(t, modulePath, "per-component publisher module file should exist")
 
 		foundationPath := filepath.Join(projectDir, "internal", "infrastructure", "messaging", "rabbitmq", "module.go")
@@ -259,7 +259,7 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		mainGoPath := filepath.Join(projectDir, "cmd", "main.go")
 		mainContent, err := os.ReadFile(mainGoPath)
 		require.NoError(t, err)
-		assert.Contains(t, string(mainContent), "publishers.UserEventPublisherModule",
+		assert.Contains(t, string(mainContent), "publishers.Module",
 			"main.go should be auto-wired with the publisher module")
 		assert.Contains(t, string(mainContent), "rabbitmqinfra.Module",
 			"main.go should be auto-wired with the rabbitmq foundation module")
@@ -352,8 +352,8 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 			"internal/entrypoints/http/routes/user_router.go",
 			"internal/entrypoints/messaging/usereventconsumer_consumer.go",
 			"internal/entrypoints/messaging/usereventconsumer_module.go",
-			"internal/drivenadapters/messaging/usereventpublisher_publisher.go",
-			"internal/drivenadapters/messaging/usereventpublisher_module.go",
+			"internal/drivenadapters/messaging/rabbitmq/usereventpublisher_publisher.go",
+			"internal/drivenadapters/messaging/rabbitmq/module.go",
 			"internal/infrastructure/messaging/rabbitmq/module.go",
 		}
 

@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"

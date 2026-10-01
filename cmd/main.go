@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/gabheadz/scaffold-go/internal/commands"
+	"github.com/bancolombia/scaffold-go/internal/commands"
 )
 
 func main() {

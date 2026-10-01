@@ -12,7 +12,6 @@ import (
 )
 
 // Feature: go-microservice-scaffolding-cli, Property 7: Component generation creates files in correct directories
-// **Validates: Requirements 2.1, 3.1, 4.1, 5.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1**
 func TestProperty_ComponentGenerationCreatesFilesInCorrectDirectories(t *testing.T) {
 	parameters := gopter.DefaultTestParameters()
 	parameters.MinSuccessfulTests = 10 // Reduced from 50 for faster execution
@@ -289,14 +288,16 @@ func TestProperty_ComponentGenerationCreatesFilesInCorrectDirectories(t *testing
 			}
 
 			// Check that publisher file exists in drivenadapters/messaging directory
-			publisherFile := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(publisherName)+"_publisher.go")
+			// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
+			publisherFile := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(publisherName)+"_publisher.go")
 			if _, err := os.Stat(publisherFile); os.IsNotExist(err) {
 				t.Logf("Publisher file not found at expected path: %s", publisherFile)
 				return false
 			}
 
 			// Check that per-component module file exists in drivenadapters/messaging directory
-			moduleFile := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(publisherName)+"_module.go")
+			// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
+			moduleFile := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", "module.go")
 			if _, err := os.Stat(moduleFile); os.IsNotExist(err) {
 				t.Logf("Per-component module file not found at expected path: %s", moduleFile)
 				return false

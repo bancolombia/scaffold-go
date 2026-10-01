@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/filesystem"
-	"github.com/gabheadz/scaffold-go/internal/generator"
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/filesystem"
+	"github.com/bancolombia/scaffold-go/internal/generator"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -410,10 +410,10 @@ func wirePublisherIntoMain(projectDir, modulePath, broker, name string, logger *
 	}
 
 	tryWireImport(projectDir, modulePath+"/internal/infrastructure/messaging/"+broker, infraPkg.Alias, logger)
-	tryWireImport(projectDir, modulePath+"/internal/drivenadapters/messaging", "publishers", logger)
+	tryWireImport(projectDir, modulePath+"/internal/drivenadapters/messaging/"+broker, "publishers", logger)
 
 	tryWireModule(projectDir, infraPkg.Alias+".Module", logger)
-	tryWireModule(projectDir, "publishers."+name+"Module", logger)
+	tryWireModule(projectDir, "publishers.Module", logger)
 }
 
 func NewGenerateDaCacheCommand() *cobra.Command {

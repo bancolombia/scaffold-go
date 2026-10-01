@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/gabheadz/scaffold-go/internal/filesystem"
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/filesystem"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

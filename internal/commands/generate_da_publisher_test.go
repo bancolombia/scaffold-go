@@ -164,12 +164,12 @@ func TestGenerateDaPublisherCommand_Success_RabbitMQ(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	publisherPath := filepath.Join(tmpDir, "internal", "drivenadapters", "messaging", "usereventpublisher_publisher.go")
+	publisherPath := filepath.Join(tmpDir, "internal", "drivenadapters", "messaging", "rabbitmq", "usereventpublisher_publisher.go")
 	if _, err := os.Stat(publisherPath); os.IsNotExist(err) {
 		t.Error("publisher file was not created")
 	}
 
-	moduleFile := filepath.Join(tmpDir, "internal", "drivenadapters", "messaging", "usereventpublisher_module.go")
+	moduleFile := filepath.Join(tmpDir, "internal", "drivenadapters", "messaging", "rabbitmq", "module.go")
 	if _, err := os.Stat(moduleFile); os.IsNotExist(err) {
 		t.Error("per-component module file was not created")
 	}
@@ -201,7 +201,7 @@ func TestGenerateDaPublisherCommand_Success_IBMMQ(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	publisherPath := filepath.Join(tmpDir, "internal", "drivenadapters", "messaging", "invoicesender_publisher.go")
+	publisherPath := filepath.Join(tmpDir, "internal", "drivenadapters", "messaging", "ibmmq", "invoicesender_publisher.go")
 	if _, err := os.Stat(publisherPath); os.IsNotExist(err) {
 		t.Error("publisher file was not created")
 	}

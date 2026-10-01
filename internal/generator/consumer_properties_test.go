@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/template"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"

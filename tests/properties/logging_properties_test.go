@@ -27,7 +27,6 @@ func genComponentType() gopter.Gen {
 }
 
 // Feature: go-microservice-scaffolding-cli, Property 45: Generated components include structured logging
-// **Validates: Requirements 14.2**
 func TestProperty_GeneratedComponentsIncludeStructuredLogging(t *testing.T) {
 	parameters := gopter.DefaultTestParameters()
 	parameters.MinSuccessfulTests = 10
@@ -67,7 +66,7 @@ func TestProperty_GeneratedComponentsIncludeStructuredLogging(t *testing.T) {
 			case "consumer":
 				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
-				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(componentName)+"_publisher.go")
+				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
 			case "cache":
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "cache", strings.ToLower(componentName)+"_cache.go")
 			default:
@@ -124,7 +123,6 @@ func TestProperty_GeneratedComponentsIncludeStructuredLogging(t *testing.T) {
 }
 
 // Feature: go-microservice-scaffolding-cli, Property 46: Generated logging uses appropriate log levels
-// **Validates: Requirements 14.3**
 func TestProperty_GeneratedLoggingUsesAppropriateLogLevels(t *testing.T) {
 	parameters := gopter.DefaultTestParameters()
 	parameters.MinSuccessfulTests = 10
@@ -165,7 +163,8 @@ func TestProperty_GeneratedLoggingUsesAppropriateLogLevels(t *testing.T) {
 			case "consumer":
 				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
-				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(componentName)+"_publisher.go")
+				// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
+				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
 			case "cache":
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "cache", strings.ToLower(componentName)+"_cache.go")
 			default:
@@ -272,7 +271,8 @@ func TestProperty_GeneratedLoggingIncludesContextualFields(t *testing.T) {
 			case "consumer":
 				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
-				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(componentName)+"_publisher.go")
+				// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
+				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
 			case "cache":
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "cache", strings.ToLower(componentName)+"_cache.go")
 			default:

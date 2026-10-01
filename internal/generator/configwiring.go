@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/template"
 )
 
 // ConfigWiringWarning is returned by EnsureConfigBlock when

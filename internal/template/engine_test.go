@@ -314,6 +314,18 @@ func TestTemplateEngine_ExecuteWithHelperFunctions(t *testing.T) {
 				"CustomerRepository",
 			},
 		},
+		{
+			name:         "publisher template supports title helper",
+			templateName: "domain/entity/publisher.go.tmpl",
+			data: PublisherTemplateData{
+				PackageName:   "domain",
+				PublisherName: "OrderPublisher",
+				Pattern:       "event",
+			},
+			wantContains: []string{
+				"IEventPublisher",
+			},
+		},
 	}
 
 	for _, tt := range tests {
