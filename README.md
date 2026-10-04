@@ -42,6 +42,12 @@ go mod tidy
 scaffold-go generate entity User --fields Name:string,Email:string,Age:int
 ```
 
+Optional domain port (entity is assumed to already exist):
+
+```bash
+scaffold-go generate interface ProductReceiver --entity Product --operation ProcessProduct
+```
+
 ### 3. Generate a use case
 
 ```bash
@@ -107,6 +113,21 @@ scaffold-go generate entity [name] --fields Field1:type1,Field2:type2
 Flags:
   -f, --fields strings   Entity fields in format Name:type (comma-separated)
 ```
+
+### generate interface
+
+Generate a domain interface (gateway or port) for an existing entity.
+
+```bash
+scaffold-go generate interface [name] --entity Entity --operation Operation
+
+Flags:
+  -e, --entity string      Existing domain entity (PascalCase)
+      --operation string   Operation name (PascalCase)
+```
+
+The positional name must not include the `I` prefix. Output is
+`internal/domain/{lowercase}.go` declaring `I{Name}`.
 
 ### generate usecase
 

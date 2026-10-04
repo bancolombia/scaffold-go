@@ -56,6 +56,15 @@ Persistent flags (declared, not consumed by generators today):
 scaffold-go generate entity [name] -f|--fields Name:type,...
 ```
 
+### `generate interface`
+
+```bash
+scaffold-go generate interface [name] -e|--entity Name --operation Operation
+```
+
+Declares `I{Name}` in `internal/domain/{lowercase}.go`. The name must not
+include the `I` prefix. The entity file is not required to exist.
+
 ### `generate usecase`
 
 ```bash

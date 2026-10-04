@@ -9,9 +9,10 @@ description: Recommended order for adding a feature with scaffold-go generate.
 ([internal/commands/generate.go](https://github.com/bancolombia/scaffold-go/blob/master/internal/commands/generate.go)):
 
 1. **entity** — model + repository port
-2. **usecase** — application logic that depends on ports
-3. **ep** — HTTP or message consumer that calls the use case
-4. **da** — database, API, publisher, or cache that implements ports
+2. **interface** — optional extra domain port on an existing entity
+3. **usecase** — application logic that depends on ports
+4. **ep** — HTTP or message consumer that calls the use case
+5. **da** — database, API, publisher, or cache that implements ports
 
 Skipping entity before `da database` fails validation: the adapter generator
 checks that `internal/domain/{entity}.go` and `{entity}_repository.go` exist
@@ -72,17 +73,18 @@ drivers, or broker SDKs
 
 1. `cd` into the initialized module.
 2. Generate the entity with the fields you need for persistence **and** HTTP.
-3. Generate one use case per action (`CreateX`, `GetX`, `ListX`, …).
-4. Choose an entry-point:
+3. Optionally generate a [domain interface](./domain-interfaces.md) when a use case needs a port that is not the entity repository.
+4. Generate one use case per action (`CreateX`, `GetX`, `ListX`, …).
+5. Choose an entry-point:
    - Synchronous API → [HTTP](./http-entry-points.md)
    - Queue/topic → [consumer](./consumers.md)
-5. Implement outbound I/O:
+6. Implement outbound I/O:
    - Persistence → [database](./database-adapters.md)
    - Other HTTP API → [API client](./api-clients.md)
    - Emit messages → [publisher](./publishers.md)
    - Cache → [cache](./cache.md)
-6. `go mod tidy`, fill TODOs, wire any missing Fx providers.
-7. Run with `-v` on the CLI if generation skipped files or failed validation.
+7. `go mod tidy`, fill TODOs, wire any missing Fx providers.
+8. Run with `-v` on the CLI if generation skipped files or failed validation.
 
 ## Persistent generate flags
 

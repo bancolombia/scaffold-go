@@ -43,7 +43,8 @@ and mapped to exit codes in `cmd/main.go`.
 
 ## Adding a new generate kind
 
-1. Add Cobra command under `generate ep` or `generate da`.
+1. Add a Cobra command under `generate` (sibling of `entity` / `interface`)
+   or under `generate ep` / `generate da`.
 2. Implement a generator with `Validate` + `Generate`.
 3. Add templates under `internal/template/templates/`.
 4. Register templates in the engine if it uses an explicit map

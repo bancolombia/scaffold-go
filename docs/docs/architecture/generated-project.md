@@ -52,6 +52,7 @@ blog-service/
 |------------|----------------|
 | `init` | `cmd/main.go`, `config/*`, `go.mod`, `Makefile` |
 | `generate entity` | `internal/domain/{name}.go` |
+| `generate interface` | `internal/domain/{lowercase-name}.go` |
 | `generate usecase` | `internal/usecase/{name}_usecase.go` |
 | `generate ep http` | `internal/entrypoints/http/**` |
 | `generate ep consumer` | `entrypoints/messaging`, `infrastructure/messaging` |

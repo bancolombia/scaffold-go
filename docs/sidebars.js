@@ -20,6 +20,7 @@ const sidebars = {
         'guides/workflow',
         'guides/init',
         'guides/entities',
+        'guides/domain-interfaces',
         'guides/use-cases',
         'guides/http-entry-points',
         'guides/consumers',

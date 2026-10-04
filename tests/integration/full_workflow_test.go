@@ -124,6 +124,24 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		assert.Contains(t, repoStr, "List", "repository should have List method")
 	})
 
+	t.Run("generate interface", func(t *testing.T) {
+		cmd := exec.Command(cliPath, "generate", "interface", "UserReceiver",
+			"--entity", "User",
+			"--operation", "ProcessUser")
+		cmd.Dir = projectDir
+		output, err := cmd.CombinedOutput()
+		require.NoError(t, err, "generate interface command failed: %s", string(output))
+
+		ifacePath := filepath.Join(projectDir, "internal", "domain", "userreceiver.go")
+		assert.FileExists(t, ifacePath, "interface file should exist")
+
+		content, err := os.ReadFile(ifacePath)
+		require.NoError(t, err)
+		ifaceContent := string(content)
+		assert.Contains(t, ifaceContent, "type IUserReceiver interface")
+		assert.Contains(t, ifaceContent, "ProcessUser(ctx context.Context, user *User) error")
+	})
+
 	// Step 4: Generate a use case
 	t.Run("generate usecase", func(t *testing.T) {
 		cmd := exec.Command(cliPath, "generate", "usecase", "CreateUser",

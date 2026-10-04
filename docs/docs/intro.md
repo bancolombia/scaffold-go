@@ -38,6 +38,7 @@ Source: [cmd/main.go](https://github.com/bancolombia/scaffold-go/blob/master/cmd
 |-------|---------|------|----------------|
 | Project | `scaffold-go init` | — | Module, `cmd/main.go`, `config/`, layer dirs |
 | Domain | `generate entity` | — | Struct, `I{Name}Repository`, tests |
+| Domain | `generate interface` | — | `I{Name}` port on an existing entity |
 | Domain | `generate usecase` | — | Use case + `internal/usecase/module.go` |
 | Entry-point | `generate ep http` | Fiber handler | Handler, routes, server, CORS |
 | Entry-point | `generate ep consumer` | rabbitmq / ibmmq | Consumer + broker foundation module |

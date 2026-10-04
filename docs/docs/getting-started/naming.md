@@ -29,7 +29,7 @@ If `--module` is omitted, the module path equals the project name
 
 ## Component names
 
-Used by `entity`, `usecase`, `ep http`, `ep consumer`, `da api`,
+Used by `entity`, `interface`, `usecase`, `ep http`, `ep consumer`, `da api`,
 `da publisher`, and `da cache`:
 
 ```text

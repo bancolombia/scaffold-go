@@ -47,6 +47,15 @@ type EntityTemplateData struct {
 	ModulePath     string
 }
 
+// DomainInterfaceTemplateData contains data for a domain gateway/port template.
+type DomainInterfaceTemplateData struct {
+	PackageName   string
+	InterfaceName string
+	EntityName    string
+	OperationName string
+	ParamName     string
+}
+
 // UseCaseTemplateData contains data for use case template
 type UseCaseTemplateData struct {
 	PackageName  string

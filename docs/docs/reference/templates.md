@@ -30,6 +30,7 @@ Data structs live in
 | `domain/entity/entity.go.tmpl` | `internal/domain/{name}.go` |
 | `domain/entity/repository.go.tmpl` | `internal/domain/{name}_repository.go` |
 | `domain/entity/entity_test.go.tmpl` | `internal/domain/{name}_test.go` |
+| `domain/interface/interface.go.tmpl` | `internal/domain/{lowercase-name}.go` (`I{Name}`) |
 | `domain/usecase/usecase.go.tmpl` | `internal/usecase/{name}_usecase.go` |
 | `domain/usecase/usecase_test.go.tmpl` | tests |
 | `domain/entity/publisher.go.tmpl` | Domain-side publisher port (when used) |

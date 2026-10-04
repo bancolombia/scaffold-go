@@ -73,7 +73,7 @@ graph TB
 | Domain model | Entities | `generate entity` |
 | Application API | Use cases | `generate usecase` |
 | Driving ports | Handlers, consumers | `generate ep` |
-| Driven ports | Repository interfaces | `I{Name}Repository` |
+| Driven ports | Repository and gateway interfaces | `I{Name}Repository`, `generate interface` |
 | Driven adapters | SQL, HTTP, MQ | `generate da` |
 
 Python analogue: a Django app often mixes models, views, and ORM in one
