@@ -64,7 +64,7 @@ func TestProperty_GeneratedComponentsIncludeStructuredLogging(t *testing.T) {
 				// generateComponent seeds a TestEntity and generates postgres adapter files.
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "database", "postgres_adapter.go")
 			case "consumer":
-				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
+				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
 			case "cache":
@@ -161,7 +161,7 @@ func TestProperty_GeneratedLoggingUsesAppropriateLogLevels(t *testing.T) {
 				// the operational logging (Info + Error) that this property asserts on.
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "database", "testentity_repository.go")
 			case "consumer":
-				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
+				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
 				// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
@@ -269,7 +269,7 @@ func TestProperty_GeneratedLoggingIncludesContextualFields(t *testing.T) {
 				// that carries the structured logging (adapter file itself is thin).
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "database", "testentity_repository.go")
 			case "consumer":
-				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
+				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
 				// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")

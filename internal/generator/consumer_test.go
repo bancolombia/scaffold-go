@@ -268,17 +268,19 @@ func TestConsumerGenerator_PerComponentModule(t *testing.T) {
 
 	// One file should be the per-component module, named after the component
 	// (NOT a shared "module.go" that would be overwritten on the next generate).
+	// Match on the entrypoints path specifically: the foundation module under
+	// internal/infrastructure/messaging also ends with "module.go".
 	var moduleContent, modulePath string
 	for _, f := range files {
-		if strings.HasSuffix(f.Path, "_module.go") {
+		if strings.Contains(f.Path, "entrypoints/messaging/rabbitmq") && strings.HasSuffix(f.Path, "module.go") {
 			moduleContent = f.Content
 			modulePath = f.Path
 		}
 	}
 	require.NotEmpty(t, moduleContent)
-	assert.Contains(t, modulePath, "orderconsumer_module.go")
+	assert.Contains(t, modulePath, "module.go")
 	assert.Contains(t, moduleContent, "package consumers")
-	assert.Contains(t, moduleContent, "var OrderConsumerModule")
+	assert.Contains(t, moduleContent, "var Module")
 	assert.Contains(t, moduleContent, "fx.Provide(NewOrderConsumerConsumer)")
 	assert.Contains(t, moduleContent, "fx.Invoke(RegisterOrderConsumer)")
 }

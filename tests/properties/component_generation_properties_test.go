@@ -150,14 +150,14 @@ func TestProperty_ComponentGenerationCreatesFilesInCorrectDirectories(t *testing
 			}
 
 			// Check that consumer file exists in entrypoints/messaging directory
-			consumerFile := filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(consumerName)+"_consumer.go")
+			consumerFile := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", strings.ToLower(consumerName)+"_consumer.go")
 			if _, err := os.Stat(consumerFile); os.IsNotExist(err) {
 				t.Logf("Consumer file not found at expected path: %s", consumerFile)
 				return false
 			}
 
 			// Check that per-component module file exists in entrypoints/messaging directory
-			moduleFile := filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(consumerName)+"_module.go")
+			moduleFile := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", "module.go")
 			if _, err := os.Stat(moduleFile); os.IsNotExist(err) {
 				t.Logf("Per-component module file not found at expected path: %s", moduleFile)
 				return false

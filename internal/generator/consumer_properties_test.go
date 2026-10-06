@@ -63,7 +63,7 @@ func TestProperty_GeneratedConsumerEntrypointsAreWiredAsFxModules(t *testing.T) 
 
 			var moduleContent string
 			for _, f := range files {
-				if strings.HasSuffix(f.Path, "_module.go") && strings.Contains(f.Path, "internal/entrypoints/messaging") {
+				if strings.Contains(f.Path, "entrypoints/messaging/rabbitmq") && strings.HasSuffix(f.Path, "module.go") {
 					moduleContent = f.Content
 					break
 				}
@@ -76,7 +76,7 @@ func TestProperty_GeneratedConsumerEntrypointsAreWiredAsFxModules(t *testing.T) 
 			if !strings.Contains(moduleContent, "go.uber.org/fx") {
 				return false
 			}
-			if !strings.Contains(moduleContent, "var "+consumerName+"Module") {
+			if !strings.Contains(moduleContent, "var Module") {
 				return false
 			}
 			if !strings.Contains(moduleContent, "fx.Provide(New"+consumerName+"Consumer)") {

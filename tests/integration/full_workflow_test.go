@@ -301,10 +301,10 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		output, err := cmd.CombinedOutput()
 		require.NoError(t, err, "generate ep consumer command failed: %s", string(output))
 
-		consumerPath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "usereventconsumer_consumer.go")
+		consumerPath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", "usereventconsumer_consumer.go")
 		assert.FileExists(t, consumerPath, "consumer file should exist")
 
-		modulePath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "usereventconsumer_module.go")
+		modulePath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", "module.go")
 		assert.FileExists(t, modulePath, "per-component consumer module file should exist")
 
 		mainGoPath := filepath.Join(projectDir, "cmd", "main.go")
@@ -368,8 +368,8 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 			"internal/entrypoints/http/middleware/cors.go",
 			"internal/entrypoints/http/routes/routes.go",
 			"internal/entrypoints/http/routes/user_router.go",
-			"internal/entrypoints/messaging/usereventconsumer_consumer.go",
-			"internal/entrypoints/messaging/usereventconsumer_module.go",
+			"internal/entrypoints/messaging/rabbitmq/usereventconsumer_consumer.go",
+			"internal/entrypoints/messaging/rabbitmq/module.go",
 			"internal/drivenadapters/messaging/rabbitmq/usereventpublisher_publisher.go",
 			"internal/drivenadapters/messaging/rabbitmq/module.go",
 			"internal/infrastructure/messaging/rabbitmq/module.go",

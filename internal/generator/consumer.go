@@ -126,8 +126,8 @@ func (g *ConsumerGenerator) Generate() ([]GeneratedFile, error) {
 		return nil, fmt.Errorf("failed to generate component module: %w", err)
 	}
 
-	consumerPath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Name)+"_consumer.go")
-	moduleFilePath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Name)+"_module.go")
+	consumerPath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Broker), strings.ToLower(g.Name)+"_consumer.go")
+	moduleFilePath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Broker), "module.go")
 
 	files := []GeneratedFile{
 		{Path: consumerPath, Content: consumerContent},
