@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please do not report security vulnerabilities in public issues, discussions, or pull requests. 
+Please do not report security vulnerabilities in public issues, discussions, or pull requests.
 
 We prefer private disclosure via GitHub Security Advisories before public disclosure. Use GitHub's private reporting form for this repository:
 

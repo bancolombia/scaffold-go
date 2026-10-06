@@ -5,9 +5,9 @@ description: Run Docusaurus locally and deploy this site to GitHub Pages.
 
 # Publishing docs
 
-User-facing Markdown lives in the repository **`docs/docs`** folder. 
+User-facing Markdown lives in the repository **`docs/docs`** folder.
 The root of the **`docs/`** folder is a Docusaurus 3 app that points
-`docs.path` at `./docs` (subfolder) so the Go module stays free of 
+`docs.path` at `./docs` (subfolder) so the Go module stays free of
 Node tooling at the root.
 
 ## Local development
