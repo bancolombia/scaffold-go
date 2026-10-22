@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/manager"
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/manager"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type HandlerGenerator struct {
@@ -251,7 +253,8 @@ func (g *HandlerGenerator) parseRoutes() []template.Route {
 
 		methodRaw := strings.TrimSpace(r[:firstColon])
 		// Capitalize only the first letter (e.g., "get" -> "Get", "GET" -> "Get")
-		method := strings.Title(strings.ToLower(methodRaw))
+		//method := strings.Title(strings.ToLower(methodRaw))
+		method := cases.Title(language.Und, cases.NoLower).String(strings.ToLower(methodRaw))
 		remainder := r[firstColon+1:]
 
 		// Find the last colon for the handler name

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gabheadz/scaffold-go/internal/domain"
+	"github.com/bancolombia/scaffold-go/internal/domain"
 )
 
 type FileSystem struct{}

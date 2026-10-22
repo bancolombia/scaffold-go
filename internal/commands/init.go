@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/gabheadz/scaffold-go/internal/filesystem"
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/filesystem"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -135,6 +135,7 @@ func initProject(name, modulePath, projectDir string) error {
 		"project/config.go.tmpl":   filepath.Join(projectDir, "config", "config.go"),
 		"project/config.yaml.tmpl": filepath.Join(projectDir, "config", "config.yaml"),
 		"project/README.md.tmpl":   filepath.Join(projectDir, "README.md"),
+		"project/Makefile.tmpl":    filepath.Join(projectDir, "Makefile"),
 	}
 
 	logger.Debug("Generating project files",

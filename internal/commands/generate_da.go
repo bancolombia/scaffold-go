@@ -2,11 +2,13 @@ package commands
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/filesystem"
-	"github.com/gabheadz/scaffold-go/internal/generator"
-	"github.com/gabheadz/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/filesystem"
+	"github.com/bancolombia/scaffold-go/internal/generator"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -146,6 +148,15 @@ Field format: Name:type
 			}
 
 			logger := GetLogger()
+
+			projectName := resolveProjectName(validator, projectDir)
+			if warn, err := generator.EnsureConfigBlockForDatabase(projectDir, dbType, projectName, tmpl); err != nil {
+				return WrapFileSystemError("config-wiring", "config/config.yaml", err)
+			} else if warn != nil {
+				logger.Warn(warn.Error())
+				fmt.Printf("⚠ %s\n", warn.Error())
+			}
+
 			logger.Info("Database adapter generated successfully", zap.String("entity", entityName), zap.String("type", dbType))
 			fmt.Printf("✓ Database adapter for '%s' generated (%s)\n", entityName, dbType)
 			for _, f := range files {
@@ -159,8 +170,8 @@ Field format: Name:type
 	cmd.Flags().StringVarP(&dbType, "type", "t", "postgres", "Database type: postgres, mongodb, or dynamodb")
 	cmd.Flags().StringVarP(&entityName, "entity", "e", "", "Entity name that this adapter implements the repository for (required)")
 	cmd.Flags().StringSliceVarP(&fields, "fields", "f", []string{}, "Entity fields in format Name:type (comma-separated, required). Example: Name:string,Email:string,Age:int")
-	cmd.MarkFlagRequired("entity")
-	cmd.MarkFlagRequired("fields")
+	_ = cmd.MarkFlagRequired("entity")
+	_ = cmd.MarkFlagRequired("fields")
 
 	return cmd
 }
@@ -399,10 +410,10 @@ func wirePublisherIntoMain(projectDir, modulePath, broker, name string, logger *
 	}
 
 	tryWireImport(projectDir, modulePath+"/internal/infrastructure/messaging/"+broker, infraPkg.Alias, logger)
-	tryWireImport(projectDir, modulePath+"/internal/drivenadapters/messaging", "publishers", logger)
+	tryWireImport(projectDir, modulePath+"/internal/drivenadapters/messaging/"+broker, "publishers", logger)
 
 	tryWireModule(projectDir, infraPkg.Alias+".Module", logger)
-	tryWireModule(projectDir, "publishers."+name+"Module", logger)
+	tryWireModule(projectDir, "publishers.Module", logger)
 }
 
 func NewGenerateDaCacheCommand() *cobra.Command {
@@ -489,4 +500,19 @@ The generated cache adapter provides caching functionality for the application.`
 	}
 
 	return cmd
+}
+
+// resolveProjectName returns the last segment of the module path declared in
+// go.mod (e.g. "github.com/acme/orders" → "orders"). Falls back to the
+// project directory's basename when go.mod cannot be read.
+func resolveProjectName(v *validator.Validator, projectDir string) string {
+	modulePath, err := v.GetModulePath(projectDir)
+	if err == nil && modulePath != "" {
+		return filepath.Base(modulePath)
+	}
+	abs, err := filepath.Abs(projectDir)
+	if err != nil {
+		return "app"
+	}
+	return filepath.Base(abs)
 }

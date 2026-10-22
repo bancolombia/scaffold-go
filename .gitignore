@@ -16,6 +16,8 @@ go.work
 
 # Dependency directories
 vendor/
+node_modules/
+.docusaurus/
 
 # Build output
 bin/

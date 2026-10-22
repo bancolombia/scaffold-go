@@ -28,11 +28,6 @@ func genInvalidComponentName() gopter.Gen {
 	)
 }
 
-// genValidComponentName generates valid component names (PascalCase)
-func genValidComponentName() gopter.Gen {
-	return gen.RegexMatch(`^[A-Z][a-zA-Z0-9]{0,20}`)
-}
-
 // genValidProjectName generates valid project names (lowercase with hyphens)
 func genValidProjectName() gopter.Gen {
 	return gen.RegexMatch(`^[a-z][a-z0-9-]{0,20}`)

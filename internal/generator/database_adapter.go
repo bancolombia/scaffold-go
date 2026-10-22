@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 )
 
 type DatabaseAdapterGenerator struct {
@@ -114,13 +114,23 @@ func (g *DatabaseAdapterGenerator) Generate() ([]GeneratedFile, error) {
 	// --------------------------------
 	moduleFilePath := filepath.Join(g.ProjectDir, "internal", "drivenadapters", "database", "module.go")
 	if err := g.Validator.FileExists(moduleFilePath); err == nil {
-		// TODO: Handle the case where the Db module file already exists, and add the newly generated entity repository
+		// The database module already exists, no need to re-generate it
 	} else {
+		// create the database module file since it doesn't exist
 		moduleContent, moduleErr := g.Templates.Execute("da/database/database_module.go.tmpl", data)
 		if moduleErr != nil {
 			return nil, fmt.Errorf("failed to generate module: %w", moduleErr)
 		}
 		generatedFiles = append(generatedFiles, GeneratedFile{Path: moduleFilePath, Content: moduleContent})
+	}
+
+	// Ensure the main.go file imports the database module for auto-wiring, if already present it will not duplicate the import
+	if err := EnsureMainImport(g.ProjectDir, modulePath+"/internal/drivenadapters/database", ""); err != nil {
+		fmt.Printf("⚠ auto-wire import failed: %s\n", err.Error())
+	}
+	// Ensure the main.go file has the database module wired up, if already wired it will not duplicate it
+	if err := EnsureMainModule(g.ProjectDir, "database.Module"); err != nil {
+		fmt.Printf("⚠ auto-wire module failed: %s\n", err.Error())
 	}
 
 	return generatedFiles, nil

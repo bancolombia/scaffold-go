@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -19,7 +19,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "scaffold-go",
 		Short: "A Go CLI tool for scaffolding microservice projects",
-		Long: `scaffold-go is a code generation tool that scaffolds Go microservice projects 
+		Long: `scaffold-go is a code generation tool that scaffolds Go microservice projects
 following clean architecture principles.
 
 The tool generates projects with three distinct layers:
@@ -69,7 +69,7 @@ func initConfig() {
 	}
 
 	viper.AutomaticEnv()
-	viper.ReadInConfig()
+	_ = viper.ReadInConfig()
 }
 
 func initLogger() {

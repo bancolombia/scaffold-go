@@ -1,0 +1,5 @@
+mongodb:
+  uri: mongodb://%s:%s@localhost:27017 # mongo adapter will replace %s and %s with user and password respectively
+  database: {{.Name}}
+  user: # set here explicitly or define it in the APP_MONGODB_USER environment variable; takes precedence over environment variable if set
+  password: # set here explicitly or define it in the APP_MONGODB_PASSWORD environment variable; takes precedence over environment variable if set

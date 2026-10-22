@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
@@ -27,6 +29,8 @@ type DatabaseConfig struct {
 
 type MongoDBConfig struct {
 	URI      string
+	User     string
+	Password string
 	Database string
 }
 
@@ -47,6 +51,12 @@ func NewConfig() (*Config, error) {
 	// Add config paths (supports multiple locations)
 	viper.AddConfigPath("./config")
 	viper.AddConfigPath(".")
+
+	// Setup Environment Variables
+	viper.SetEnvPrefix("APP") // Optional prefix: for example APP_SERVER_PORT maps to server.port in YAML
+
+	// CRITICAL: Replace dots in YAML keys with underscores for Env Vars
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// Enable environment variable support
 	viper.AutomaticEnv()
@@ -79,17 +89,16 @@ func setDefaults() {
 	// Database defaults
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", "5432")
-	viper.SetDefault("database.user", "postgres")
-	viper.SetDefault("database.password", "postgres")
 	viper.SetDefault("database.database", "{{.Name}}")
 
 	// MongoDB defaults
 	viper.SetDefault("mongodb.uri", "mongodb://localhost:27017")
 	viper.SetDefault("mongodb.database", "{{.Name}}")
+	viper.SetDefault("mongodb.user", "")
+	viper.SetDefault("mongodb.password", "")
 
 	// DynamoDB defaults
 	viper.SetDefault("dynamodb.region", "us-east-1")
-	viper.SetDefault("dynamodb.endpoint", "")
 
 	// Logging defaults
 	viper.SetDefault("logging.level", "info")

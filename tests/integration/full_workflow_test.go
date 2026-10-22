@@ -124,6 +124,24 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		assert.Contains(t, repoStr, "List", "repository should have List method")
 	})
 
+	t.Run("generate interface", func(t *testing.T) {
+		cmd := exec.Command(cliPath, "generate", "interface", "UserReceiver",
+			"--entity", "User",
+			"--operation", "ProcessUser")
+		cmd.Dir = projectDir
+		output, err := cmd.CombinedOutput()
+		require.NoError(t, err, "generate interface command failed: %s", string(output))
+
+		ifacePath := filepath.Join(projectDir, "internal", "domain", "userreceiver.go")
+		assert.FileExists(t, ifacePath, "interface file should exist")
+
+		content, err := os.ReadFile(ifacePath)
+		require.NoError(t, err)
+		ifaceContent := string(content)
+		assert.Contains(t, ifaceContent, "type IUserReceiver interface")
+		assert.Contains(t, ifaceContent, "ProcessUser(ctx context.Context, user *User) error")
+	})
+
 	// Step 4: Generate a use case
 	t.Run("generate usecase", func(t *testing.T) {
 		cmd := exec.Command(cliPath, "generate", "usecase", "CreateUser",
@@ -247,10 +265,10 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		output, err := cmd.CombinedOutput()
 		require.NoError(t, err, "generate da publisher command failed: %s", string(output))
 
-		publisherPath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "usereventpublisher_publisher.go")
+		publisherPath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", "usereventpublisher_publisher.go")
 		assert.FileExists(t, publisherPath, "publisher file should exist")
 
-		modulePath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "usereventpublisher_module.go")
+		modulePath := filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", "module.go")
 		assert.FileExists(t, modulePath, "per-component publisher module file should exist")
 
 		foundationPath := filepath.Join(projectDir, "internal", "infrastructure", "messaging", "rabbitmq", "module.go")
@@ -259,7 +277,7 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		mainGoPath := filepath.Join(projectDir, "cmd", "main.go")
 		mainContent, err := os.ReadFile(mainGoPath)
 		require.NoError(t, err)
-		assert.Contains(t, string(mainContent), "publishers.UserEventPublisherModule",
+		assert.Contains(t, string(mainContent), "publishers.Module",
 			"main.go should be auto-wired with the publisher module")
 		assert.Contains(t, string(mainContent), "rabbitmqinfra.Module",
 			"main.go should be auto-wired with the rabbitmq foundation module")
@@ -283,10 +301,10 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		output, err := cmd.CombinedOutput()
 		require.NoError(t, err, "generate ep consumer command failed: %s", string(output))
 
-		consumerPath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "usereventconsumer_consumer.go")
+		consumerPath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", "usereventconsumer_consumer.go")
 		assert.FileExists(t, consumerPath, "consumer file should exist")
 
-		modulePath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "usereventconsumer_module.go")
+		modulePath := filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", "module.go")
 		assert.FileExists(t, modulePath, "per-component consumer module file should exist")
 
 		mainGoPath := filepath.Join(projectDir, "cmd", "main.go")
@@ -337,6 +355,7 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 		expectedFiles := []string{
 			"go.mod",
 			"README.md",
+			"Makefile",
 			"cmd/main.go",
 			"config/config.go",
 			"config/config.yaml",
@@ -349,10 +368,10 @@ func TestFullProjectGenerationWorkflow(t *testing.T) {
 			"internal/entrypoints/http/middleware/cors.go",
 			"internal/entrypoints/http/routes/routes.go",
 			"internal/entrypoints/http/routes/user_router.go",
-			"internal/entrypoints/messaging/usereventconsumer_consumer.go",
-			"internal/entrypoints/messaging/usereventconsumer_module.go",
-			"internal/drivenadapters/messaging/usereventpublisher_publisher.go",
-			"internal/drivenadapters/messaging/usereventpublisher_module.go",
+			"internal/entrypoints/messaging/rabbitmq/usereventconsumer_consumer.go",
+			"internal/entrypoints/messaging/rabbitmq/module.go",
+			"internal/drivenadapters/messaging/rabbitmq/usereventpublisher_publisher.go",
+			"internal/drivenadapters/messaging/rabbitmq/module.go",
 			"internal/infrastructure/messaging/rabbitmq/module.go",
 		}
 

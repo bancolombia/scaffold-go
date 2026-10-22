@@ -159,7 +159,7 @@ func Test{{.EntityName}}Repository_GetByID(t *testing.T) {
 				tableName: "{{.EntityName | toTableName}}",
 				logger:    zap.NewNop(),
 			}
-			
+
 			// Execute
 			ctx := context.Background()
 			got, err := repo.GetByID(ctx, tt.id)

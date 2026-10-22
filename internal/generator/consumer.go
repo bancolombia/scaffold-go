@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 )
 
 // Supported messaging brokers for ep consumer / da publisher.
@@ -126,8 +126,8 @@ func (g *ConsumerGenerator) Generate() ([]GeneratedFile, error) {
 		return nil, fmt.Errorf("failed to generate component module: %w", err)
 	}
 
-	consumerPath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Name)+"_consumer.go")
-	moduleFilePath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Name)+"_module.go")
+	consumerPath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Broker), strings.ToLower(g.Name)+"_consumer.go")
+	moduleFilePath := filepath.Join(g.ProjectDir, "internal", "entrypoints", "messaging", strings.ToLower(g.Broker), "module.go")
 
 	files := []GeneratedFile{
 		{Path: consumerPath, Content: consumerContent},

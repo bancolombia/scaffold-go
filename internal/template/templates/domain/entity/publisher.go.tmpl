@@ -1,0 +1,8 @@
+package domain
+
+import "context"
+
+// I{{.Pattern | title}}Publisher defines emission of domain events
+type I{{.Pattern | title}}Publisher interface {
+	Publish(ctx context.Context, entity any) error
+}

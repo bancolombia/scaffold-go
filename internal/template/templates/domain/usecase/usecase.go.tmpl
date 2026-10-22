@@ -40,9 +40,9 @@ func (uc *{{.UseCaseName | toLower}}Impl) Execute(ctx context.Context{{if .Input
 {{- if .HasLogger}}
 	uc.logger.Info("executing {{.UseCaseName}}")
 {{- end}}
-	
+
 	// TODO: Implement use case logic
-	
+
 {{- if .OutputType}}
 	var result {{.OutputType}}
 	return result, nil

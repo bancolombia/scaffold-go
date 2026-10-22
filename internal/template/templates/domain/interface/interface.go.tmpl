@@ -1,0 +1,8 @@
+package domain
+
+import "context"
+
+// {{.InterfaceName}} defines domain operations for {{.EntityName}}.
+type {{.InterfaceName}} interface {
+	{{.OperationName}}(ctx context.Context, {{.ParamName}} *{{.EntityName}}) error
+}

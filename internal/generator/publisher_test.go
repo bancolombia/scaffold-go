@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/template"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -187,7 +187,7 @@ func TestPublisherGenerator_Generate_RabbitMQ(t *testing.T) {
 
 			var publisherContent string
 			for _, f := range files {
-				if strings.HasSuffix(f.Path, "_publisher.go") {
+				if strings.Contains(f.Path, "drivenadapters/messaging") && strings.HasSuffix(f.Path, "_publisher.go") {
 					publisherContent = f.Content
 					assert.Contains(t, f.Path, "internal/drivenadapters/messaging")
 				}
@@ -267,16 +267,18 @@ func TestPublisherGenerator_PerComponentModule(t *testing.T) {
 
 	var moduleContent, modulePath string
 	for _, f := range files {
-		if strings.HasSuffix(f.Path, "_module.go") && strings.Contains(f.Path, "drivenadapters/messaging") {
+		if strings.HasSuffix(f.Path, "module.go") && strings.Contains(f.Path, "drivenadapters/messaging/rabbitmq/") {
 			moduleContent = f.Content
 			modulePath = f.Path
 		}
 	}
 	require.NotEmpty(t, moduleContent)
-	assert.Contains(t, modulePath, "ordereventpublisher_module.go")
+	assert.Contains(t, modulePath, "module.go")
 	assert.Contains(t, moduleContent, "package publishers")
-	assert.Contains(t, moduleContent, "var OrderEventPublisherModule")
-	assert.Contains(t, moduleContent, "fx.Provide(NewOrderEventPublisherPublisher)")
+	assert.Contains(t, moduleContent, "var Module")
+	assert.Contains(t, moduleContent, "fx.Provide(")
+	assert.Contains(t, moduleContent, "fx.Annotate(")
+	assert.Contains(t, moduleContent, "NewOrderEventPublisherPublisher")
 }
 
 func TestPublisherGenerator_FoundationModuleEmittedOnce(t *testing.T) {

@@ -29,7 +29,7 @@ func TestNewRootCommand(t *testing.T) {
 			}{
 				use:   "scaffold-go",
 				short: "A Go CLI tool for scaffolding microservice projects",
-				long:  "scaffold-go is a code generation tool that scaffolds Go microservice projects \nfollowing clean architecture principles.\n\nThe tool generates projects with three distinct layers:\n  • Domain Layer: Pure business logic with no external dependencies\n  • EntryPoints Layer: External interfaces (HTTP, messaging)\n  • DrivenAdapters Layer: Infrastructure implementations (databases, APIs, caching)\n\nThe dependency rule is strictly enforced: dependencies point inward toward the domain.",
+				long:  "scaffold-go is a code generation tool that scaffolds Go microservice projects\nfollowing clean architecture principles.\n\nThe tool generates projects with three distinct layers:\n  • Domain Layer: Pure business logic with no external dependencies\n  • EntryPoints Layer: External interfaces (HTTP, messaging)\n  • DrivenAdapters Layer: Infrastructure implementations (databases, APIs, caching)\n\nThe dependency rule is strictly enforced: dependencies point inward toward the domain.",
 			},
 		},
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gabheadz/scaffold-go/internal/domain"
+	"github.com/bancolombia/scaffold-go/internal/domain"
 	"go.uber.org/zap"
 )
 

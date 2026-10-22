@@ -11,10 +11,11 @@ func NewGenerateCommand() *cobra.Command {
 		Long: `Generate components for your microservice following clean architecture.
 
 The recommended order when building a feature is:
-  1. entity   - Define the domain model (and its repository interface)
-  2. usecase  - Implement the business logic that orchestrates entities
-  3. ep       - Add an entry-point that drives the use case (HTTP, message consumer, ...)
-  4. da       - Add a driven adapter that implements outbound contracts (database, api, publisher, cache)
+  1. entity    - Define the domain model (and its repository interface)
+  2. interface - Optionally declare another domain port that operates on an entity
+  3. usecase   - Implement the business logic that orchestrates entities
+  4. ep        - Add an entry-point that drives the use case (HTTP, message consumer, ...)
+  5. da        - Add a driven adapter that implements outbound contracts (database, api, publisher, cache)
 
 Each entry-point and driven adapter requires you to specify its kind explicitly,
 so there is no ambiguity between, for example, an HTTP handler and a message consumer.
@@ -24,21 +25,24 @@ All generate commands validate that you're in an initialized project (checks for
 		Example: `  # 1. Domain entity
   scaffold-go generate entity User --fields Name:string,Email:string
 
-  # 2. Domain use case
+  # 2. Domain interface (optional port)
+  scaffold-go generate interface ProductReceiver --entity Product --operation ProcessProduct
+
+  # 3. Domain use case
   scaffold-go generate usecase CreateUser --dependencies userRepo:UserRepository
 
-  # 3. Entry-point (HTTP handler)
+  # 4. Entry-point (HTTP handler)
   scaffold-go generate ep http UserHandler \
     --usecases createUser:CreateUserUseCase \
     --routes POST:/users:CreateUser
 
-  # 3. Entry-point (message consumer)
+  # 4. Entry-point (message consumer)
   scaffold-go generate ep consumer OrderConsumer --usecases processOrder:ProcessOrderUseCase
 
-  # 4. Driven adapter (database)
+  # 5. Driven adapter (database)
   scaffold-go generate da database UserRepo --type postgres --entity User --fields Name:string,Email:string
 
-  # 4. Driven adapter (external API)
+  # 5. Driven adapter (external API)
   scaffold-go generate da api PaymentClient --url https://api.payment.com
 
   # Use short alias
@@ -50,6 +54,7 @@ All generate commands validate that you're in an initialized project (checks for
 	cmd.PersistentFlags().Bool("force", false, "Force overwrite existing files without prompting")
 
 	cmd.AddCommand(NewGenerateEntityCommand())
+	cmd.AddCommand(NewGenerateInterfaceCommand())
 	cmd.AddCommand(NewGenerateUseCaseCommand())
 	cmd.AddCommand(NewGenerateEntryPointCommand())
 	cmd.AddCommand(NewGenerateDrivenAdapterCommand())

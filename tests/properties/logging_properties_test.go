@@ -27,7 +27,6 @@ func genComponentType() gopter.Gen {
 }
 
 // Feature: go-microservice-scaffolding-cli, Property 45: Generated components include structured logging
-// **Validates: Requirements 14.2**
 func TestProperty_GeneratedComponentsIncludeStructuredLogging(t *testing.T) {
 	parameters := gopter.DefaultTestParameters()
 	parameters.MinSuccessfulTests = 10
@@ -65,9 +64,9 @@ func TestProperty_GeneratedComponentsIncludeStructuredLogging(t *testing.T) {
 				// generateComponent seeds a TestEntity and generates postgres adapter files.
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "database", "postgres_adapter.go")
 			case "consumer":
-				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
+				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
-				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(componentName)+"_publisher.go")
+				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
 			case "cache":
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "cache", strings.ToLower(componentName)+"_cache.go")
 			default:
@@ -124,7 +123,6 @@ func TestProperty_GeneratedComponentsIncludeStructuredLogging(t *testing.T) {
 }
 
 // Feature: go-microservice-scaffolding-cli, Property 46: Generated logging uses appropriate log levels
-// **Validates: Requirements 14.3**
 func TestProperty_GeneratedLoggingUsesAppropriateLogLevels(t *testing.T) {
 	parameters := gopter.DefaultTestParameters()
 	parameters.MinSuccessfulTests = 10
@@ -163,9 +161,10 @@ func TestProperty_GeneratedLoggingUsesAppropriateLogLevels(t *testing.T) {
 				// the operational logging (Info + Error) that this property asserts on.
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "database", "testentity_repository.go")
 			case "consumer":
-				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
+				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
-				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(componentName)+"_publisher.go")
+				// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
+				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
 			case "cache":
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "cache", strings.ToLower(componentName)+"_cache.go")
 			default:
@@ -270,9 +269,10 @@ func TestProperty_GeneratedLoggingIncludesContextualFields(t *testing.T) {
 				// that carries the structured logging (adapter file itself is thin).
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "database", "testentity_repository.go")
 			case "consumer":
-				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", strings.ToLower(componentName)+"_consumer.go")
+				filePath = filepath.Join(projectDir, "internal", "entrypoints", "messaging", "rabbitmq", strings.ToLower(componentName)+"_consumer.go")
 			case "publisher":
-				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", strings.ToLower(componentName)+"_publisher.go")
+				// assumes rabbitmq as generateComponent method uses rabbitmq as the messaging broker
+				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "messaging", "rabbitmq", strings.ToLower(componentName)+"_publisher.go")
 			case "cache":
 				filePath = filepath.Join(projectDir, "internal", "drivenadapters", "cache", strings.ToLower(componentName)+"_cache.go")
 			default:

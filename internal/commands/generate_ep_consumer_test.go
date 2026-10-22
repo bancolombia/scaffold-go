@@ -170,12 +170,12 @@ func TestGenerateEpConsumerCommand_Success_RabbitMQ(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	consumerPath := filepath.Join(tmpDir, "internal", "entrypoints", "messaging", "usereventconsumer_consumer.go")
+	consumerPath := filepath.Join(tmpDir, "internal", "entrypoints", "messaging", "rabbitmq", "usereventconsumer_consumer.go")
 	if _, err := os.Stat(consumerPath); os.IsNotExist(err) {
 		t.Error("consumer file was not created")
 	}
 
-	moduleFile := filepath.Join(tmpDir, "internal", "entrypoints", "messaging", "usereventconsumer_module.go")
+	moduleFile := filepath.Join(tmpDir, "internal", "entrypoints", "messaging", "rabbitmq", "module.go")
 	if _, err := os.Stat(moduleFile); os.IsNotExist(err) {
 		t.Error("per-component module file was not created")
 	}

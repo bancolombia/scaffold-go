@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/filesystem"
-	"github.com/gabheadz/scaffold-go/internal/generator"
-	"github.com/gabheadz/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/filesystem"
+	"github.com/bancolombia/scaffold-go/internal/generator"
+	"github.com/bancolombia/scaffold-go/internal/template"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -146,7 +146,7 @@ Field format: Name:type
 	}
 
 	cmd.Flags().StringSliceVarP(&fields, "fields", "f", []string{}, "Entity fields in format Name:type (comma-separated). Example: Name:string,Email:string,Age:int")
-	cmd.MarkFlagRequired("fields")
+	_ = cmd.MarkFlagRequired("fields")
 
 	return cmd
 }

@@ -69,6 +69,7 @@ func getFuncMap() template.FuncMap {
 		"toCamelCase":  toCamelCase,
 		"toKebabCase":  toKebabCase,
 		"pluralize":    pluralize,
+		"title":        toTitle,
 		"toLower":      strings.ToLower,
 		"toUpper":      strings.ToUpper,
 		"zeroValue":    zeroValue,
@@ -78,6 +79,13 @@ func getFuncMap() template.FuncMap {
 		"add":          func(a, b int) int { return a + b },
 		"isLast":       func(index, length int) bool { return index == length-1 },
 	}
+}
+
+func toTitle(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 func toSnakeCase(s string) string {

@@ -73,7 +73,9 @@ func TestGenerateDaCacheCommand_ValidationError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get current directory: %v", err)
 	}
-	defer os.Chdir(oldDir)
+	defer func() {
+		_ = os.Chdir(oldDir)
+	}()
 
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatalf("failed to change directory: %v", err)

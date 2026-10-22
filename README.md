@@ -15,13 +15,13 @@ A Go CLI tool for scaffolding microservice projects following clean architecture
 ## Installation
 
 ```bash
-go install github.com/gabheadz/scaffold-go@latest
+go install github.com/bancolombia/scaffold-go@latest
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/gabheadz/scaffold-go.git
+git clone https://github.com/bancolombia/scaffold-go.git
 cd scaffold-go
 go build -o scaffold-go cmd/main.go
 ```
@@ -42,6 +42,12 @@ go mod tidy
 scaffold-go generate entity User --fields Name:string,Email:string,Age:int
 ```
 
+Optional domain port (entity is assumed to already exist):
+
+```bash
+scaffold-go generate interface ProductReceiver --entity Product --operation ProcessProduct
+```
+
 ### 3. Generate a use case
 
 ```bash
@@ -59,7 +65,7 @@ scaffold-go generate ep http User \
 ### 5. Generate a database driven adapter
 
 ```bash
-scaffold-go generate da database UserRepo \
+scaffold-go generate da database \
   --type postgres \
   --entity User \
   --fields Name:string,Email:string,Age:int
@@ -107,6 +113,21 @@ scaffold-go generate entity [name] --fields Field1:type1,Field2:type2
 Flags:
   -f, --fields strings   Entity fields in format Name:type (comma-separated)
 ```
+
+### generate interface
+
+Generate a domain interface (gateway or port) for an existing entity.
+
+```bash
+scaffold-go generate interface [name] --entity Entity --operation Operation
+
+Flags:
+  -e, --entity string      Existing domain entity (PascalCase)
+      --operation string   Operation name (PascalCase)
+```
+
+The positional name must not include the `I` prefix. Output is
+`internal/domain/{lowercase}.go` declaring `I{Name}`.
 
 ### generate usecase
 
@@ -181,7 +202,11 @@ Group command for **driven adapters** (the components the application uses to
 talk to the outside world). You must pick a kind:
 
 ```bash
-scaffold-go generate da <kind> [name] [flags]
+# database uses flags instead of a positional name
+scaffold-go generate da database [flags]
+scaffold-go generate da api [name] [flags]
+scaffold-go generate da publisher [name] [flags]
+scaffold-go generate da cache [name]
 
 Kinds:
   database    Database adapter (postgres, mongodb, dynamodb)
@@ -193,7 +218,7 @@ Kinds:
 #### generate da database
 
 ```bash
-scaffold-go generate da database [name] \
+scaffold-go generate da database \
   --type postgres \
   --entity EntityName \
   --fields Field1:type1,Field2:type2
@@ -306,7 +331,7 @@ scaffold-go gen ep http Post \
   --routes POST:/posts:CreatePost,GET:/posts/:id:GetPost
 
 # 5. Generate PostgreSQL driven adapter
-scaffold-go gen da database PostRepo \
+scaffold-go gen da database \
   --type postgres \
   --entity Post \
   --fields Title:string,Content:string,AuthorID:string
@@ -316,6 +341,8 @@ go mod tidy
 go build -o blog-service cmd/main.go
 ./blog-service
 ```
+
+_NOTE_: some modules would need to be adjusted prior to first run. But you get the idea.
 
 ### Using verbose logging for debugging
 
@@ -355,8 +382,12 @@ go run cmd/main.go [command]
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please read the [contributing guide](CONTRIBUTING.md) before opening an issue or pull request.
+
+## Reporting vulnerabilities or security bugs
+
+Please refer to [Security](SECURITY.md) on how to report vulnerabilities to the mantainers.
 
 ## License
 
-MIT License
+This project is licensed under the [Apache License 2.0](LICENCE).

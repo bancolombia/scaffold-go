@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gabheadz/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/template"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
@@ -50,7 +50,7 @@ func TestProperty_GeneratedPublisherAdaptersAreWiredAsFxModules(t *testing.T) {
 
 			var moduleContent string
 			for _, f := range files {
-				if strings.HasSuffix(f.Path, "_module.go") && strings.Contains(f.Path, "internal/drivenadapters/messaging") {
+				if strings.HasSuffix(f.Path, "module.go") && strings.Contains(f.Path, "internal/drivenadapters/messaging") {
 					moduleContent = f.Content
 					break
 				}
@@ -59,18 +59,25 @@ func TestProperty_GeneratedPublisherAdaptersAreWiredAsFxModules(t *testing.T) {
 				return false
 			}
 
-			if !strings.Contains(moduleContent, "go.uber.org/fx") {
-				return false
-			}
-			if !strings.Contains(moduleContent, "var "+publisherName+"Module") {
-				return false
-			}
-			if !strings.Contains(moduleContent, "fx.Provide(New"+publisherName+"Publisher)") {
-				return false
-			}
 			if !strings.Contains(moduleContent, "package publishers") {
 				return false
 			}
+			if !strings.Contains(moduleContent, "go.uber.org/fx") {
+				return false
+			}
+			if !strings.Contains(moduleContent, "var Module = fx.Options") {
+				return false
+			}
+			if !strings.Contains(moduleContent, "fx.Provide(") {
+				return false
+			}
+			if !strings.Contains(moduleContent, "fx.Annotate(") {
+				return false
+			}
+			if !strings.Contains(moduleContent, "New"+publisherName+"Publisher") {
+				return false
+			}
+
 			return true
 		},
 		genValidPublisherName(),
@@ -115,7 +122,7 @@ func TestProperty_GeneratedPublisherIncludesBrokerSpecificCalls(t *testing.T) {
 
 			var publisherContent string
 			for _, f := range files {
-				if strings.HasSuffix(f.Path, "_publisher.go") {
+				if strings.Contains(f.Path, "drivenadapters/messaging") && strings.HasSuffix(f.Path, "_publisher.go") {
 					publisherContent = f.Content
 					break
 				}

@@ -314,6 +314,18 @@ func TestTemplateEngine_ExecuteWithHelperFunctions(t *testing.T) {
 				"CustomerRepository",
 			},
 		},
+		{
+			name:         "publisher template supports title helper",
+			templateName: "domain/entity/publisher.go.tmpl",
+			data: PublisherTemplateData{
+				PackageName:   "domain",
+				PublisherName: "OrderPublisher",
+				Pattern:       "event",
+			},
+			wantContains: []string{
+				"IEventPublisher",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -389,6 +401,10 @@ func TestTemplateEngine_LoadsAllTemplates(t *testing.T) {
 		"project/config.go.tmpl",
 		"project/config.yaml.tmpl",
 		"project/README.md.tmpl",
+		"project/Makefile.tmpl",
+		"config/mongodb.yaml.tmpl",
+		"config/dynamodb.yaml.tmpl",
+		"config/postgres.yaml.tmpl",
 	}
 
 	for _, tmplName := range requiredTemplates {

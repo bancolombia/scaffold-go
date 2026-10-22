@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gabheadz/scaffold-go/internal/manager"
-	"github.com/gabheadz/scaffold-go/internal/template"
-	"github.com/gabheadz/scaffold-go/internal/validator"
+	"github.com/bancolombia/scaffold-go/internal/manager"
+	"github.com/bancolombia/scaffold-go/internal/template"
+	"github.com/bancolombia/scaffold-go/internal/validator"
 )
 
 type UseCaseGenerator struct {
@@ -101,10 +101,11 @@ func (g *UseCaseGenerator) ComponentType() string {
 }
 
 // extractEntityType extracts the entity name from a repository type.
-// For example, "UserRepository" returns "User", "OrderRepository" returns "Order".
+// For example, "IUserRepository" returns "User", "OrderRepository" returns "Order".
 // Returns empty string for non-repository types or edge cases like "Repository" alone.
 func extractEntityType(repoType string) string {
 	const repositorySuffix = "Repository"
+	const repositoryPrefix = "I"
 
 	// Check if type ends with "Repository"
 	if !strings.HasSuffix(repoType, repositorySuffix) {
@@ -112,7 +113,7 @@ func extractEntityType(repoType string) string {
 	}
 
 	// Extract the prefix (entity name)
-	entityName := strings.TrimSuffix(repoType, repositorySuffix)
+	entityName := strings.TrimPrefix(strings.TrimSuffix(repoType, repositorySuffix), repositoryPrefix)
 
 	// Handle edge cases: empty names or "Repository" alone
 	if entityName == "" {

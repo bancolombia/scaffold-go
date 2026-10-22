@@ -20,11 +20,11 @@ func New{{.EntityName}}({{range $i, $f := .Fields}}{{if $i}}, {{end}}{{$f.Name |
 		{{.Name}}: {{.Name | toCamelCase}},
 {{- end}}
 	}
-	
+
 	if err := entity.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	return entity, nil
 }
 

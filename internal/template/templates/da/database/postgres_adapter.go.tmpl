@@ -41,7 +41,7 @@ func (p *PostgresAdapter) onStop(ctx context.Context) error {
 }
 
 func buildUrlString(cfg *config.Config) string {
-	return fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", 
+	return fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s",
 		cfg.Database.User, cfg.Database.Password, cfg.Database.Host,
 		cfg.Database.Port, cfg.Database.Database)
 }

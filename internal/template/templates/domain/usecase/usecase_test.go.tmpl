@@ -98,7 +98,7 @@ func Test{{.UseCaseName}}_Execute(t *testing.T) {
 			setup: func({{range $i, $dep := .Dependencies}}{{if $i}}, {{end}}m{{$dep.Type}} *Mock{{$dep.Type}}{{$.UseCaseName}}{{end}}) {
 				// Setup mock expectations
 				{{range .Dependencies}}
-				// m{{.Type}}.On("MethodName", mock.Anything).Return(nil)
+				// m{{.Type}}.On("MethodName", mock.Anything, mock.Anything).Return(nil)
 				{{end}}
 			},
 			want:    {{.OutputType | testValue}},
@@ -172,7 +172,7 @@ func Test{{.UseCaseName}}_Execute_ContextCancellation(t *testing.T) {
 	logger := zap.NewNop()
 	uc := New{{.UseCaseName}}UseCase(
 		{{range .Dependencies}}
-		mock{{.Type}}, 
+		mock{{.Type}},
 		{{end}}
 		logger,
 	)
@@ -180,6 +180,11 @@ func Test{{.UseCaseName}}_Execute_ContextCancellation(t *testing.T) {
 	// Create cancelled context
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
+	{{range .Dependencies}}
+	mock{{.Type}}.On("Create", mock.MatchedBy(func(ctx context.Context) bool {
+		return ctx.Err() == context.Canceled
+	}), mock.Anything).Return(context.Canceled).Once()
+	{{end}}
 
 	// Execute
 	input := 0 //change this for required type or value
@@ -198,13 +203,16 @@ func Benchmark{{.UseCaseName}}_Execute(b *testing.B) {
 	logger := zap.NewNop()
 	uc := New{{.UseCaseName}}UseCase(
 		{{range .Dependencies}}
-		mock{{.Type}}, 
+		mock{{.Type}},
 		{{end}}
 		logger,
 	)
 
 	ctx := context.Background()
 	input := 0 //change this for required type or value
+	{{range .Dependencies}}
+	mock{{.Type}}.On("Create", mock.Anything, mock.Anything).Return(nil)
+	{{end}}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -3,7 +3,7 @@ package commands
 import (
 	"errors"
 
-	"github.com/gabheadz/scaffold-go/internal/generator"
+	"github.com/bancolombia/scaffold-go/internal/generator"
 )
 
 // asMainWiringWarning is a small wrapper around errors.As that lets the
