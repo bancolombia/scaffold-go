@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkscaffold_go_docs||=[]).push([[2580],{2580(e,s,a){a.d(s,{createWardleyServices:()=>c.J});var c=a(120);a(184)}}]);

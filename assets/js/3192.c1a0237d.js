@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkscaffold_go_docs||=[]).push([[3192],{3192(c,e,s){s.d(e,{createArchitectureServices:()=>r.S});var r=s(4549);s(184)}}]);
